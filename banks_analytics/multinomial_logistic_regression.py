@@ -15,14 +15,7 @@ from export_test import export_test # A file I wrote to export results to a txt 
 np.set_printoptions(threshold=np.inf)
 np.set_printoptions(precision=3) # This one is a lot less scary, just sets number of printed digits
 
-# Notes:
-# Currently not restricting output vectors to 24 months (ie. if it guesses that it will be past that, it will show it)
-
 ############################### HELPER FUNCTIONS ###############################
-
-# Converts input from CSV from str to float (just to make the code below neater)
-def convertNorm(N1, N2, N3):
-	return float(N1), float(N2), float(N3)
 
 # Rounds x to n significant figures
 def n_sig_figs(x, n):
@@ -66,10 +59,12 @@ with open('../csv/model_data.csv', 'rb') as csvfile:
 
 	for row in my_reader:	# Iterate over all rows in csv file
 		if firstRow == False and row[3] != "NA" and row[4] != "NA" and row[5] != "NA": # Check that row is valid
-			N1, N2, N3 = convertNorm(row[3], row[4], row[5])	# Convert input to float
+			N1, N2, N3 = float(row[3]), float(row[4]), float(row[5])# Convert input to float
 			X = np.concatenate((X, np.array( [[ N1, N2, N3 ]] ))) 	# Add the new entry onto the array
 			if row[6] == "Norm" or row[6]  == "NA":			# If bank still has license
 				Y = np.append(Y, float(9000))			# Month value = 9000
+			elif int(row[12]) > 24:					# If bank will lose license in more than 2 years
+				Y = np.append(Y, float(1000))			# Month value = 1000		
 			else:
 				Y = np.append(Y, float(row[12]))		# Otherwise, grab number of months left from sheet
 		else:
@@ -83,17 +78,33 @@ with open('../csv/model_data.csv', 'rb') as csvfile:
 
 X = np.delete(X, 0, 0) # Remove the initial dummy row
 
+# For confirming correct data, delete later
+###
+temp = []
+for val in Y:
+	if val not in temp:
+		temp.append(val)
+print("\n")		
+print(sorted(temp))
+exit()
+###
+
 print("\nGenerating model...")
-X_train, X_test, Y_train, Y_test = train_test_split( X, Y, test_size=0.33 )		# Split data into testing & training, with 66% training, 33% testing
+
+X_train, X_test, Y_train, Y_test = train_test_split( X, Y, test_size=0.33, stratify=Y)	# Split data into testing & training, with 66% training, 33% testing
 logreg = linear_model.LogisticRegression(solver='lbfgs', multi_class='multinomial')	# Create the model, setting parameters of model
 logreg.fit(X_train, Y_train) 								# Train the model on our training set
-predict_arr = logreg.predict(X_test)							# Run a prediction for test dataset
-prob_arr = logreg.predict_proba(X_test)							# Runs prediction, outputs probability vectors
-per_corr = logreg.score(X_test, Y_test)							# Calculate accuracy (% correct) on test set
 
-# TODO Put graphing stuff here
+predict_arr = logreg.predict(X_test)	# Run a prediction for test dataset
+prob_arr = logreg.predict_proba(X_test)	# Runs prediction, outputs probability vectors
 
-# Exporting results to txt file
+per_corr  = logreg.score(X_test, Y_test)			# Calculate the percentage correct on test set
+precision = precision_score(Y_test, predict_arr, average=None)	# Calculate the precision
+recall    = recall_score(Y_test, predict_arr, average=None)	# Calculate the recall
+f1        = f1_score(y_true, y_pred, average=None)		# Calculate f1
+
+# TODO Graphing stuff will go here..
+
 print("Exporting results...")
 cX_train, cY_train, cX_test, cY_test, cPer_corr, cPredict_arr, cProb_arr = convert_data(X_train, Y_train, X_test, Y_test, per_corr, predict_arr, prob_arr)
 extended, short = export_test(cX_train, cY_train, cX_test, cY_test, cPer_corr, cPredict_arr, cProb_arr)
