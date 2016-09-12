@@ -64,7 +64,7 @@ def export_test(X_train, Y_train, X_test, Y_test, accuracy, predict_arr, prob_ar
 	date = str(datetime.date.today())
 	time = str(datetime.datetime.now().time())[:8]
 
-	# Create folder "date/" within current directory, if it doesn't exist already
+	# Create folder "../out/<date>/", if it doesn't exist already
 	path = "../out/%s/" % date
 	if not os.path.exists(path):
     		os.makedirs(path)

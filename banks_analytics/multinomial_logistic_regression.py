@@ -29,7 +29,7 @@ def n_sig_figs(x, n):
 	# x = 10 ^ (log10(x)), the floor of which is the number of places the first significant digit is away from the decimal point (in one direction)
 	# And the round() function rounds n places after the decimal place (or before, if n is negative)
 	# So without adding in -(n-1), it rounds to one significant figure    
-	if x == 0: return 0	
+	if x == 0: return 0
 	return round(x, -(int(floor(log10(abs(x))))-(n-1)))
 
 # Rounds all the elements in an 2d numpy array to n significant figures
@@ -41,36 +41,14 @@ def round_2d_arr(arr, n):
 			arr[i][j] = n_sig_figs(arr[i][j], n)
 
 # Prepare data for printing (round and convert to str)
-def convert_data(X_train, Y_train, X_test, Y_test, accuracy, predict_arr, prob_arr):
+def convert_data(X_train, Y_train, X_test, Y_test, per_corr, predict_arr, prob_arr):
 	# Round training/test data, accuracy, and probability vectors
 	round_2d_arr(X_train, 3)
 	round_2d_arr(X_test, 3)
-	accuracy = n_sig_figs(accuracy, 3)
+	per_corr = n_sig_figs(per_corr, 3)
 	round_2d_arr(prob_arr, 3)
 
-	return str(X_train), str(Y_train), str(X_test), str(Y_test), accuracy, str(predict_arr), str(prob_arr)
-
-# Code for running stats on model accuracy, but doesn't work as expected
-"""
-
-# Return array of differences between predicted and actual values
-def difference(predict, actual):
-	assert(predict.size == actual.size)
-	ret = np.array([])
-	for i in range(predict.size):
-		# Going to ignore these for now since it skews the average so
-		# much that it has no meaning
-		if predict[i] != 9000 and actual[i] != 9000:
-			ret = np.append(ret, (predict[i] - actual[i]))
-	return ret
-
-# Return the average 
-def average(arr):
-	sum = 0;
-	for i in range(arr.size):
-		sum += abs(arr[i])
-	return sum/arr.size
-"""
+	return str(X_train), str(Y_train), str(X_test), str(Y_test), per_corr, str(predict_arr), str(prob_arr)
 
 ################################## MODEL CODE ##################################
 
@@ -111,12 +89,14 @@ logreg = linear_model.LogisticRegression(solver='lbfgs', multi_class='multinomia
 logreg.fit(X_train, Y_train) 								# Train the model on our training set
 predict_arr = logreg.predict(X_test)							# Run a prediction for test dataset
 prob_arr = logreg.predict_proba(X_test)							# Runs prediction, outputs probability vectors
-accuracy = logreg.score(X_test, Y_test)							# Calculate accuracy (% correct) on test set
+per_corr = logreg.score(X_test, Y_test)							# Calculate accuracy (% correct) on test set
+
+# TODO Put graphing stuff here
 
 # Exporting results to txt file
 print("Exporting results...")
-cX_train, cY_train, cX_test, cY_test, cAccuracy, cPredict_arr, cProb_arr = convert_data(X_train, Y_train, X_test, Y_test, accuracy, predict_arr, prob_arr)
-extended, short = export_test(cX_train, cY_train, cX_test, cY_test, cAccuracy, cPredict_arr, cProb_arr)
+cX_train, cY_train, cX_test, cY_test, cPer_corr, cPredict_arr, cProb_arr = convert_data(X_train, Y_train, X_test, Y_test, per_corr, predict_arr, prob_arr)
+extended, short = export_test(cX_train, cY_train, cX_test, cY_test, cPer_corr, cPredict_arr, cProb_arr)
 print("\nDetailed results written to %s" % extended)
 print("Brief    results written to %s" % short)
 
