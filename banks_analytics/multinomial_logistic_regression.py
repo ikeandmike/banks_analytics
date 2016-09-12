@@ -4,8 +4,9 @@ import csv
 import sys
 from math import log10, floor
 import numpy as np
-from sklearn.cross_validation import train_test_split
 from sklearn import linear_model
+from sklearn.metrics import precision_score, recall_score, f1_score
+from sklearn.cross_validation import train_test_split
 
 from export_test import export_test # A file I wrote to export results to a txt file
 
