@@ -2,3 +2,5 @@
 .~*
 *.pyc
 out/
+
+parser/.DS_Store
