@@ -4,13 +4,13 @@ import pandas as pd
 import sys
 
 
-def load_crb_standatrts(license_num, date):
-    # loads values of standarts (aka normativs) which are binding on russian banks
+def load_crb_standards(license_num, date):
+    # loads values of standards (aka normativs) which are binding on russian banks
     # license_num -- int value
     # date -- string 'yyyy-mm-ddT00:00:00+03:00'
     #    e.g. July, 1 2016 --> '2016-07-01T00:00:00+03:00'
     # this data is available for the fist days of each month
-    # returns pandas data frame with values of standarts for chosen bank & date
+    # returns pandas data frame with values of standards for chosen bank & date
     url = 'http://www.cbr.ru/CreditInfoWebServ/CreditOrgInfo.asmx?WSDL'
     imp = Import('http://schemas.xmlsoap.org/soap/encoding/')
     imp.filter.add('http://web.cbr.ru/')
