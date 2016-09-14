@@ -2,6 +2,7 @@
 
 import csv
 import sys
+import datetime
 from math import log10, floor
 import numpy as np
 from sklearn import linear_model
@@ -47,11 +48,10 @@ def convert_data(X_train, Y_train, X_test, Y_test, per_corr, predict_arr, prob_a
 ################################## MODEL CODE ##################################
 
 print("WPI/Deloitte Regression Model for Predicting License Revocation of Russian Banks")
-print("Latest Version Written Sept. 9, 2016\n")
+print("Latest Version Written %s\n" % str(datetime.date.today()))
 
-# Import data from csv
+print("Importing data...")
 with open('../csv/model_data.csv', 'rb') as csvfile:
-	print("Importing data...")
 	my_reader = csv.reader(csvfile)
 	X = np.array([[1,2,3]]) # Going to form our feature dataset (weird Numpy issue requires me to fill instantiate it with dummy data; will drop later)
 	Y = np.array([]) 	# Going to form our target dataset	
@@ -79,37 +79,33 @@ with open('../csv/model_data.csv', 'rb') as csvfile:
 
 X = np.delete(X, 0, 0) # Remove the initial dummy row
 
-# For confirming correct data, delete later
-###
-temp = []
-for val in Y:
-	if val not in temp:
-		temp.append(val)
-print("\n")		
-print(sorted(temp))
-exit()
-###
-
-print("\nGenerating model...")
+print("\nFitting model...")
 
 X_train, X_test, Y_train, Y_test = train_test_split( X, Y, test_size=0.33, stratify=Y)	# Split data into testing & training, with 66% training, 33% testing
-logreg = linear_model.LogisticRegression(solver='lbfgs', multi_class='multinomial')	# Create the model, setting parameters of model
+logreg = linear_model.LogisticRegression(penalty='l1', C=0.01)				# Create the model, setting parameters of model
 logreg.fit(X_train, Y_train) 								# Train the model on our training set
 
+print("Generating predictions...")
 predict_arr = logreg.predict(X_test)	# Run a prediction for test dataset
 prob_arr = logreg.predict_proba(X_test)	# Runs prediction, outputs probability vectors
 
+# ERROR on line 91
+
+"""
+print("Evaluating performance...")
 per_corr  = logreg.score(X_test, Y_test)			# Calculate the percentage correct on test set
 precision = precision_score(Y_test, predict_arr, average=None)	# Calculate the precision
 recall    = recall_score(Y_test, predict_arr, average=None)	# Calculate the recall
-f1        = f1_score(y_true, y_pred, average=None)		# Calculate f1
+f1        = f1_score(Y_test, predict_arr, average=None)		# Calculate f1
+"""
 
 # TODO Graphing stuff will go here..
 
+"""
 print("Exporting results...")
 cX_train, cY_train, cX_test, cY_test, cPer_corr, cPredict_arr, cProb_arr = convert_data(X_train, Y_train, X_test, Y_test, per_corr, predict_arr, prob_arr)
 extended, short = export_test(cX_train, cY_train, cX_test, cY_test, cPer_corr, cPredict_arr, cProb_arr)
 print("\nDetailed results written to %s" % extended)
 print("Brief    results written to %s" % short)
-
+"""
 ################################################################################
