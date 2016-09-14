@@ -2,7 +2,6 @@
 
 import csv
 import sys
-import datetime
 from math import log10, floor
 import numpy as np
 from sklearn import linear_model
@@ -47,8 +46,7 @@ def convert_data(X_train, Y_train, X_test, Y_test, per_corr, predict_arr, prob_a
 
 ################################## MODEL CODE ##################################
 
-print("WPI/Deloitte Regression Model for Predicting License Revocation of Russian Banks")
-print("Latest Version Written %s\n" % str(datetime.date.today()))
+print("WPI/Deloitte Regression Model for Predicting License Revocation of Russian Banks\n")
 
 print("Importing data...")
 with open('../csv/model_data.csv', 'rb') as csvfile:
@@ -60,7 +58,7 @@ with open('../csv/model_data.csv', 'rb') as csvfile:
 
 	for row in my_reader:	# Iterate over all rows in csv file
 		if firstRow == False and row[3] != "NA" and row[4] != "NA" and row[5] != "NA": # Check that row is valid
-			N1, N2, N3 = float(row[3]), float(row[4]), float(row[5])# Convert input to float
+			N1, N2, N3 = round(float(row[3]), 2), round(float(row[4]), 2), round(float(row[5]), 2)# Convert input to float
 			X = np.concatenate((X, np.array( [[ N1, N2, N3 ]] ))) 	# Add the new entry onto the array
 			if row[6] == "Norm" or row[6]  == "NA":			# If bank still has license
 				Y = np.append(Y, float(9000))			# Month value = 9000
@@ -81,7 +79,7 @@ X = np.delete(X, 0, 0) # Remove the initial dummy row
 
 print("\nFitting model...")
 
-X_train, X_test, Y_train, Y_test = train_test_split( X, Y, test_size=0.33, stratify=Y)	# Split data into testing & training, with 66% training, 33% testing
+X_train, X_test, Y_train, Y_test = train_test_split( X, Y, test_size=0.5, stratify=Y)	# Split data into testing & training, with 66% training, 33% testing
 logreg = linear_model.LogisticRegression(penalty='l1', C=0.01)				# Create the model, setting parameters of model
 logreg.fit(X_train, Y_train) 								# Train the model on our training set
 
@@ -89,15 +87,20 @@ print("Generating predictions...")
 predict_arr = logreg.predict(X_test)	# Run a prediction for test dataset
 prob_arr = logreg.predict_proba(X_test)	# Runs prediction, outputs probability vectors
 
-# ERROR on line 91
+print(logreg.score(X_test, Y_test))
 
-"""
+# Warning on line 91
+
+
 print("Evaluating performance...")
 per_corr  = logreg.score(X_test, Y_test)			# Calculate the percentage correct on test set
 precision = precision_score(Y_test, predict_arr, average=None)	# Calculate the precision
 recall    = recall_score(Y_test, predict_arr, average=None)	# Calculate the recall
 f1        = f1_score(Y_test, predict_arr, average=None)		# Calculate f1
-"""
+
+print("Precision: %s\n" % precision)
+print("Recall: %s\n" % recall)
+print("f1: %s" % f1)
 
 # TODO Graphing stuff will go here..
 
