@@ -3,6 +3,39 @@ from math import log10, floor
 
 class ModelResults:
 
+############################### CLASS FUNCTIONS ################################
+
+	def __init__(self, X_train, X_test, Y_train, Y_test):
+		# Round values in X array before storing		
+		self.round_2d_arr(X_train, 3)
+		self.round_2d_arr(X_test, 3)
+		
+		self.X_train = str(X_train)
+		self.X_test  = str(X_test)
+		self.Y_train = str(Y_train)
+		self.Y_test  = str(Y_test)
+
+		self.coef = np.array([])
+
+		self.predict_arr = np.array([])
+		self.prob_arr    = np.array([])
+		self.per_corr    = 0.0
+		self.precision    = ""
+		self.recall      = ""
+		self.f1          = ""
+
+	def addResults(self, coef, predict_arr, prob_arr, per_corr, precision, recall, f1):
+		# Round values in prob_arr before storing		
+		self.round_2d_arr(prob_arr, 3)
+
+		self.coef	 = str(coef)
+		self.predict_arr = str(predict_arr)
+		self.prob_arr    = str(prob_arr)
+		self.per_corr    = self.n_sig_figs(per_corr, 3)
+		self.precsion    = str(precision)
+		self.recall      = str(recall)
+		self.f1          = str(f1)
+
 ############################### HELPER FUNCTIONS ###############################
 
 	# Rounds x to n significant figures
@@ -21,42 +54,4 @@ class ModelResults:
 			for j in range(bounds[1]): 	# Iterate over elements in vector
 				arr[i][j] = self.n_sig_figs(arr[i][j], n)
 
-	# Prepare data for printing (round and convert to str)
-	def convert_data(X_train, Y_train, X_test, Y_test, per_corr, predict_arr, prob_arr):
-		# Round training/test data, accuracy, and probability vectors
-		self.round_2d_arr(X_train, 3)
-		self.round_2d_arr(X_test, 3)
-		per_corr = n_sig_figs(per_corr, 3)
-		self.round_2d_arr(prob_arr, 3)
-
-		return str(X_train), str(Y_train), str(X_test), str(Y_test), per_corr, str(predict_arr), str(prob_arr)
-
-############################### CLASS FUNCTIONS ################################
-
-	def __init__(self, X_train, X_test, Y_train, Y_test):
-		# Round values in X array before storing		
-		self.round_2d_arr(X_train, 3)
-		self.round_2d_arr(X_test, 3)
-		
-		self.X_train = str(X_train)
-		self.X_test  = str(X_test)
-		self.Y_train = str(Y_train)
-		self.Y_test  = str(Y_test)
-
-		self.predict_arr = np.array([])
-		self.prob_arr    = np.array([])
-		self.per_corr    = 0.0
-		self.precision    = ""
-		self.recall      = ""
-		self.f1          = ""
-
-	def addResults(self, predict_arr, prob_arr, per_corr, precision, recall, f1):
-		# Round values in prob_arr before storing		
-		self.round_2d_arr(prob_arr, 3)
-
-		self.predict_arr = str(predict_arr)
-		self.prob_arr    = str(prob_arr)
-		self.per_corr    = self.n_sig_figs(per_corr, 3)
-		self.precsion    = str(precision)
-		self.recall      = str(recall)
-		self.f1          = str(f1)
+################################################################################

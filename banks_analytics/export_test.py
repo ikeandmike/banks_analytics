@@ -37,6 +37,7 @@ def long_rep(f, r, date, time):
 	f.write(draw_line())
 	
 	f.write("Results:\n\n")
+	f.write("Coefficient Matrix:\n%s\n" % r.coef)
 	f.write("Prediction Array (Predictions of Y_test):\n")
 	f.write(r.predict_arr)
 	f.write("\nProbability Vectors:\n")
@@ -59,6 +60,7 @@ def short_rep(f, r, date, time):
 	make_header(f, date, time)	
 	
 	f.write("Results:\n\n")
+	f.write("Coefficient Matrix:\n%s\n" % r.coef)
 	f.write("Percentage of Total Predictions Correct: %s\n" % r.per_corr)
 	f.write("Precision:\n")
 	f.write(r.precision)

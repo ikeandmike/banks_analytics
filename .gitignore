@@ -1,10 +1,7 @@
 *~
 .~*
 *.pyc
+*.txt
 out/
-<<<<<<< HEAD
-
 parser/.DS_Store
-=======
 banks_analytics/.idea/*
->>>>>>> origin/master
