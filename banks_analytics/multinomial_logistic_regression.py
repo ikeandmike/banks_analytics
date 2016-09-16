@@ -73,10 +73,10 @@ with open('../csv/model_data.csv', 'rb') as csvfile:
 				if row[6] == "Norm" or row[6]  == "NA":			# If bank still has license
 					Y = np.append(Y, float(9000))			# Month value = 9000
 				elif int(row[12]) >= 24:				# If bank will lose license in more than 2 years
-					Y = np.append(Y, float(1000))			# Month value = 1000	
+					Y = np.append(Y, float(1000))			# Month value = 1000
 				else:
 					Y = np.append(Y, float(row[12])+1)		# Otherwise, grab number of months left from sheet
-				
+s
 		else:
 			firstRow = False
 			numFeatures = 3
@@ -122,9 +122,12 @@ f1        = f1_score(Y_test, predict_arr, average=None)		# Calculate f1
 
 # If C value passed in, add results to file (used in script for testing several values of C)
 if len(sys.argv) > 1:
-	with open("c_results.txt", "a") as myfile:
+	with open("../out/c_results.txt", "a") as myfile:
 		print("C: %f | F1: %f" % (float(sys.argv[1]), ave(f1)))
-		myfile.write("C: %f | P: %f | R: %f | F1: %f\n" % (float(sys.argv[1]), ave(r.precision), ave(r.recall), ave(r.f1)))
+		myfile.write("C: %f | P: %f | R: %f | F1: %f\n" % (float(sys.argv[1]), ave(precision), ave(recall), ave(f1)))
+		myfile.write("Precision:\n%s\n\n" % str(precision))
+		myfile.write("Recall:\n%s\n\n" % str(recall))
+		myfile.write("F1:\n%s\n\n" % str(f1))
 		myfile.close()
 	exit() # Quit early so results aren't printed
 
