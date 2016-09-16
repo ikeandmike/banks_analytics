@@ -8,9 +8,39 @@ def ind_dict_banki_ru():
 
 
 # finds indicator number by its name in dictionary
-def ind_num_by_name(ind_name, ind_dict):  
-    try:
-        pos = ind_dict['ind_name'].index(ind_name)
-    except ValueError:
-        return None
-    return ind_dict['ind_num'][pos]
+# Accepts list or single value.
+def ind_num_by_name(ind_names):
+
+    if type(ind_names) is not list: ind_names = [ind_names]
+    
+    codes = []
+    for name in ind_names:
+	try:
+	    pos = ind_dict_banki_ru()['ind_name'].index(name)
+	except ValueError:
+            print "No indicator named " + name
+	    return None
+	codes.append(ind_dict_banki_ru()['ind_num'][pos])
+
+    if len(codes) == 1: codes = codes[0]
+    
+    return codes
+    
+# finds indictor name by its number in dictionary
+# Accepts list or single value of ints.
+def ind_name_by_num(ind_nums):
+
+    if type(ind_nums) is not list: ind_nums = [ind_nums]
+        
+    names = []
+    for ind in ind_nums:
+        try:
+            pos = ind_dict_banki_ru()['ind_num'].index(ind)
+        except ValueError:
+            print "No indicator for number " + str(ind)
+            return
+        names.append(ind_dict_banki_ru()['ind_name'][pos])
+
+    if len(names) == 1: names = names[0]
+    
+    return names
