@@ -166,10 +166,7 @@ def load_banki (ind_codes = None, update=False, redownload=False):
     # to be flat.
     banki_wide.reset_index(inplace=True)
 
-    #print banki_wide.head().to_string()
-
     banki_wide['lic_num'] = banki_wide['lic_num'].astype(int)
-    #banki_wide.drop('ind',inplace=True)
 
     banki_wide.drop_duplicates(['lic_num', 'period'], keep=False, inplace=True)
 

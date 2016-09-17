@@ -12,8 +12,6 @@ def merge_banki_revoked (banki, revoked):
     merged['period'] = pd.to_datetime(merged['period'])
     merged['revoc_date'] = pd.to_datetime(merged['revoc_date'])
 
-    merged.to_csv("~/Desktop/t.csv")
-
     print "Calculating months..."
     for row in merged.itertuples():
         if pd.notnull(row[-1]):
@@ -35,6 +33,12 @@ def merge_banki_revoked (banki, revoked):
     cols = cols[0:2] + cols[-1:] + cols[2:-1]
 
     merged = merged[cols]
+
+    print "Writing merged set with months to file..."
+
+    merged.to_csv("../csv/banki_complete.csv", index=False)
+
+    print "Returning..."
 
     return merged    
 
