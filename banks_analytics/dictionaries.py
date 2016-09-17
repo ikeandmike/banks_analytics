@@ -1,46 +1,62 @@
 # dictionary of indicators for banki.ru
 def ind_dict_banki_ru():
-    return {'ind_num':[10,30,25,20,40,50,60,70,1000,1100,1200,1300,1400,1500,1550,1600,1700,1800],
-            'ind_name':['net_assets', 'net_profit', 'equity_form123', 'equity_form134', 'loans', 'overdue_loans',
-                        'individuals_deposits', 'securities', 'return_on_net_assets', 'return_on_equity', 'overdue_loans_share',
-                        'reserve_to_loans', 'mortaged_property_to_loans', 'foreign_currency_operations_to_net_assets',  # ratios
-                        'foreign_currency_operations_rub', 'N1', 'N2', 'N3']}
+    return {'ind_num':[10,   # [0] net_assets
+                       30,   # [1] net_profit
+                       25,   # [2] equity_form123
+                       20,   # [3] equity_form134
+                       40,   # [4] loans
+                       50,   # [5] overdue_loans
+                       60,   # [6] individuals_deposits
+                       70,   # [7] securities
+                       1000, # [8] return_on_net_assets
+                       1100, # [9] return_on_equity
+                       1200, # [10] overdue_loans_share
+                       1300, # [11] reserve_to_loans
+                       1400, # [12] mortaged_property_to_loans
+                       1500, # [13] foreign_currency_operations_to_net_assets
+                       1550, # [14] foreign_currency_operations_rub
+                       1600, # [15] N1
+                       1700, # [16] N2
+                       1800],# [17] N3
+            'ind_name':['net_assets',            # [0] 10
+                        'net_profit',            # [1] 30
+                        'equity_form123',        # [2] 25
+                        'equity_form134',        # [3] 20
+                        'loans',                 # [4] 40
+                        'overdue_loans',         # [5] 50
+                        'individuals_deposits',  # [6] 60
+                        'securities',            # [7] 70
+                        'return_on_net_assets',  # [8] 1000
+                        'return_on_equity',      # [9] 1100
+                        'overdue_loans_share',   # [10] 1200
+                        'reserve_to_loans',      # [11] 1300
+                        'mortaged_property_to_loans', # [12] 1400
+                        'foreign_currency_operations_to_net_assets', # [13] 1500
+                        'foreign_currency_operations_rub',           # [14] 1550
+                        'N1',  # [15] 1600
+                        'N2',  # [16] 1700
+                        'N3']} # [17] 1800
 
+# param key 'ind_num' or 'ind_name'
+def get_ind(inds):
 
-# finds indicator number by its name in dictionary
-# Accepts list or single value.
-def ind_num_by_name(ind_names):
+    if type(inds) is not list: inds = [inds]
 
-    if type(ind_names) is not list: ind_names = [ind_names]
-    
-    codes = []
-    for name in ind_names:
-	try:
-	    pos = ind_dict_banki_ru()['ind_name'].index(name)
-	except ValueError:
-            print "No indicator named " + name
-	    return None
-	codes.append(ind_dict_banki_ru()['ind_num'][pos])
-
-    if len(codes) == 1: codes = codes[0]
-    
-    return codes
-    
-# finds indictor name by its number in dictionary
-# Accepts list or single value of ints.
-def ind_name_by_num(ind_nums):
-
-    if type(ind_nums) is not list: ind_nums = [ind_nums]
-        
-    names = []
-    for ind in ind_nums:
+    result = []
+    for i in inds:
+        if type(i) is str:
+            key = "ind_name"
+            find = "ind_num"
+        if type(i) is int:
+            key = "ind_num"
+            find = "ind_name"
         try:
-            pos = ind_dict_banki_ru()['ind_num'].index(ind)
+            pos = ind_dict_banki_ru()[key].index(i)
         except ValueError:
-            print "No indicator for number " + str(ind)
-            return
-        names.append(ind_dict_banki_ru()['ind_name'][pos])
+            print "No indicator " + str(i)
+            return None
+        result.append(ind_dict_banki_ru()[find][pos])
 
-    if len(names) == 1: names = names[0]
-    
-    return names
+    if len(result) == 1: result = result[0]
+
+    return result

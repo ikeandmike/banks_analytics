@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
-import datetime
+import datetime as dt
 import sys
+import os
 
 execfile("../banks_analytics/dictionaries.py")
 
@@ -13,21 +14,54 @@ execfile("../banks_analytics/dictionaries.py")
 # param ind_codes A single code or an array of indicator codes. These
 #   codes are defined by banki.ru
 # returns Pandas DataFrame of dataset. Writes to csv.
-def load_banki (ind_codes):
+def load_banki (ind_codes = None, update=False, redownload=False):
 
-    # Hard-coded indicator codes which behave different than N1, N2, and N3
-    exceptions = [1000, 1600, 1700, 1800]
+    now = dt.datetime.now()
+
+    print "Loading banki.ru's indicator dataset."
+
+    br_file = "../csv/banki.csv"
+    br_exists = os.path.isfile(br_file)
+
+    # If the user wants to redownload then redownload.
+    # If the file doesn't exist, then we'll have to redownload anyway.
+    if (not br_exists) or redownload:
+        banki_final = pd.DataFrame()
+        start_year_download = 2008
+        start_month_download = 1
+        if ind_codes == None: ind_codes = ind_dict_banki_ru()['ind_num']
+        if not br_exists:
+            print "No local dataset found. Re-downloading full dataset."
+    # If the file exists, and the user doesn't want to update it,
+    #   then read the csv and return it as a pandas DataFrame.
+    # If they want to update it, then set banki_final to local dataset,
+    #   and read banki.ru, stopping as soon as there are duplicates.
+    elif br_exists:
+        if not update:
+            return pd.read_csv(br_file, encoding='windows-1251')
+        else:
+            print "Updating..."
+            banki_final = pd.read_csv(br_file, index_col=0, encoding='windows-1251')
+            banki_final['period'] = pd.to_datetime(banki_final['period'])
+            start_year_download = now.year
+            if now.month == 1:
+                start_month_download = 12
+            else:
+                start_month_download = now.month - 1
+            if ind_codes == None:
+                ind_codes = list(banki_final.columns.values)[2:]
+
 
     # This empty data frame will collect all the tables from banki.
     # In other words, we'll collect data from banki in temporary tables
     # and append them to the banki_final.
-    banki_final = pd.DataFrame()
+    #banki_final = pd.DataFrame()
 
     # For each indicator, for every month of every year.
     for k in ind_codes:
-        print ( "Downloading " + ind_name_by_num(k) + "..." )
-        for i in range(2008, datetime.datetime.now().year + 1):
-            for j in range(1,13):
+        sys.stdout.write ("\rDownloading " + get_ind(k) + "...\n")
+        for i in range(start_year_download, now.year + 1):
+            for j in range(start_month_download,13):
                 end_month = j + 1 # Recall that j is the iterating month.
                 end_year = i      # i is the iterating year.
                                   # The only case when end_year does not
@@ -42,7 +76,7 @@ def load_banki (ind_codes):
                 time_end = str(end_year) + "-" + str(end_month) + "-01"
                 time_start = str(i) + "-" + str(j) + "-01"
 
-                sys.stdout.write ("\r" + time_end)
+                sys.stdout.write ("\rPeriod: " + time_end[0:-3])
                 sys.stdout.flush()
                 
                 # Contructs the url which requests the download from banki.ru
@@ -64,9 +98,10 @@ def load_banki (ind_codes):
                 #banki_table.to_csv("/Users/jabortell/Desktop/test.csv")
 
                 # Change names. Notice the 'empty' column. For some reason, banki's dataset has a one long empty column of NAs.
-                if k not in exceptions:
+
+                if len(banki_table.columns) == 9:
                     banki_table.columns = ['rating', 'rating_change', 'bank_name','lic_num',
-                                           'region', 'ind_end', 'ind_start', 'change', 'perc_change']
+                                           'region', 'ind_val', 'ind_start', 'change', 'perc_change']
                     try:
                         banki_table.drop(['rating'])
                     except:
@@ -74,10 +109,10 @@ def load_banki (ind_codes):
                     try:
                         banki_table.drop(['change'])
                     except:
-                        pass                   
+                        pass
                 else:                       
-                    banki_table.columns = ['rating_change', 'bank_name', 'lic_num', \
-                        'region', 'ind_end', 'ind_start', 'perc_change', 'empty']
+                    banki_table.columns = ['rating_change', 'bank_name', 'lic_num',
+                                           'region', 'ind_val', 'ind_start', 'perc_change', 'empty']
                     banki_table.drop('empty',axis=1, inplace=True)
 
                 # Drop unimportant columns
@@ -87,18 +122,23 @@ def load_banki (ind_codes):
                 # we'll convert it to a number by first removing the
                 # white spaces and replacing the comma decimal
                 # with the point decimal.
-                banki_table['ind_end'] = banki_table['ind_end'].str.replace(' ', '').str.replace(',', '.')
+                banki_table['ind_val'] = banki_table['ind_val'].str.replace(' ', '').str.replace(',', '.')
                 
                 # Convert to numeric.
-                banki_table['ind_end'] = pd.to_numeric(banki_table['ind_end'])
+                banki_table['ind_val'] = pd.to_numeric(banki_table['ind_val'])
                 
                 # Remember important details about this dataset, such as
                 # the indicator and date.
-                banki_table['ind'] = pd.Series(ind_name_by_num(k), index = banki_table.index)
-                banki_table['time_end'] = pd.Series(time_end, index = banki_table.index)
-                banki_table['time_end'] = pd.to_datetime(banki_table['time_end'])
-                
-                banki_final = banki_final.append(banki_table)
+                banki_table['ind'] = pd.Series(get_ind(k), index = banki_table.index)
+                banki_table['period'] = pd.Series(time_end, index = banki_table.index)
+                banki_table['period'] = pd.to_datetime(banki_table['period'])
+
+                if update:
+                    banki_final = pd.merge(banki_final, banki_table, how='left', on=['lic_num','period'])
+                else:
+                    banki_final = banki_final.append(banki_table)
+
+                #print banki_final.head().to_string()
                 
             # End j (months)
         # End i (years)
@@ -110,20 +150,32 @@ def load_banki (ind_codes):
     #del banki_table, , ind_codes, end_month, end_year, i, j, k, time_end, time_start, url
 
     ###############################################################################
-    ## Merge with local CBR summer data
+    ## Cleanup Data
     ############################################################################
 
-    print "Preparing data..."
+    #print "Preparing data..."
 
     # Indicators will now be column-wise.
-    banki_wide = pd.pivot_table(banki_final,
-        index=['time_end', 'lic_num'], columns='ind',values='ind_end')
-        
-    # The pivot_table created MultiIndex-style indices, but we need the table
-    # to be flat, so we can join banki with cbr.
+    if not update:
+        banki_wide = pd.pivot_table(banki_final,
+            index=['lic_num', 'period'], columns='ind',values='ind_val')
+    else:
+        banki_wide = banki_final
+
+    # The pivot_table created MultiIndex-style indices, but we'd like the table
+    # to be flat.
     banki_wide.reset_index(inplace=True)
 
+    #print banki_wide.head().to_string()
+
     banki_wide['lic_num'] = banki_wide['lic_num'].astype(int)
+    #banki_wide.drop('ind',inplace=True)
+
+    banki_wide.drop_duplicates(['lic_num', 'period'], keep=False, inplace=True)
+
+    banki_wide.sort_values(['lic_num', 'period'], ascending=[True, False], inplace=True)
+
+    banki_wide.to_csv("../csv/banki.csv", index=False)
 
     return banki_wide
 ####################################### STOP HERE FOR NOW ######################
@@ -133,16 +185,16 @@ def load_banki (ind_codes):
     cbr = pd.read_csv("../csv/cbr_summer.csv")
 
     # Convert columns to proper formats
-    cbr['time_end'] = pd.to_datetime(cbr['time_end'])
+    cbr['period'] = pd.to_datetime(cbr['period'])
     cbr['lic_num'] = cbr['lic_num'].astype(int)
 
     print "    Merging..." 
 
     # Merge CBR with banki.
     cbr_banki = pd.merge(cbr, banki_wide, how="outer",
-        on=['lic_num','time_end'])
+        on=['lic_num','period'])
 
-    cbr_banki.sort_values(['lic_num','time_end'])
+    cbr_banki.sort_values(['lic_num','period'])
 
     # banki's N2 and N3 are in percent format but CBR's were not.
     cbr_banki['1700'] = cbr_banki['1700'] / 100
@@ -167,11 +219,11 @@ def load_banki (ind_codes):
 
     print "    Calculating months until revocations..." 
 
-    max_dates = cbr_banki.groupby('lic_num').agg({'time_end' : np.max}).reset_index()
+    max_dates = cbr_banki.groupby('lic_num').agg({'period' : np.max}).reset_index()
 
     cbr_banki = pd.merge(cbr_banki, max_dates, how="left", on='lic_num')
 
-    for row in cbr_banki.itertuples(name='row'):
+    for row in cbr_banki.itertuples():
         cbr_banki = cbr_banki.set_value(row[0], 'months',
             12 * (row[-1].year - row[1].year) +
             (row[-1].month - row[1].month))

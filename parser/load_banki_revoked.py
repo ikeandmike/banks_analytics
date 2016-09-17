@@ -36,10 +36,10 @@ def load_banki_revoked(update=False, redownload=False):
     #   and read banki.ru, stopping as soon as there are duplicates.
     elif br_exists:
         if not update:
-            return pd.read_csv(br_file, encoding='windows-1251')
+            return pd.read_csv(br_file)
         else:
             print "Updating..."
-            banki_revoked = pd.read_csv(br_file, index_col=0, encoding='windows-1251')
+            banki_revoked = pd.read_csv(br_file, index_col=0)
             banki_revoked['period'] = pd.to_datetime(banki_revoked['period'])
 
     i = 1
@@ -48,24 +48,27 @@ def load_banki_revoked(update=False, redownload=False):
         sys.stdout.flush()
         url = 'http://www.banki.ru/banks/memory/?PAGEN_1=' + str(i)
         tmp = pd.read_html(url)[2]
-        tmp.columns = ['idx', 'bank', 'lic_num', 'cause', 'period', 'region']
+        tmp.columns = ['idx', 'bank', 'lic_num', 'cause', 'revoc_date', 'region']
         tmp.drop(['idx', 'bank', 'region', 'cause'], axis=1, inplace=True)
-        tmp['period'] = pd.to_datetime(tmp['period'])
+        tmp['revoc_date'] = pd.to_datetime(tmp['revoc_date'])
+        if tmp['lic_num'].dtype == 'object':
+            tmp = tmp[~tmp.lic_num.str.contains("-")]
+        tmp['lic_num'] = tmp['lic_num'].astype(int)
         banki_revoked = banki_revoked.append(tmp)
-        d = banki_revoked.duplicated(['lic_num', 'period'])
+        d = banki_revoked.duplicated(['lic_num', 'revoc_date'])
         if any(d): break
         i += 1
 
     print "Cleaning..."
-    banki_revoked.drop_duplicates(['lic_num', 'period'],
+    banki_revoked.drop_duplicates(['lic_num', 'revoc_date'],
                                   keep = False, inplace = True)
 
     banki_revoked.reset_index(inplace=True, drop=True)
-    banki_revoked.sort_values(['period', 'lic_num'],
+    banki_revoked.sort_values(['revoc_date', 'lic_num'],
                               ascending=[False,True], inplace=True)
 
     print "Writing to file..."
-    banki_revoked.to_csv("../csv/banki_revoked.csv", encoding='windows-1251')
+    banki_revoked.to_csv("../csv/banki_revoked.csv", index=False)
 
     print "Returning dataset."
     return banki_revoked

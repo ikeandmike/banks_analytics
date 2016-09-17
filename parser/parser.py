@@ -3,9 +3,9 @@ from sys import stdout
 import os
 import numpy as np
 
-#########################
-# Download from banki.ru
-#########################
+###############################################################################
+## Download from banki.ru
+###############################################################################
 
 #wk_dir = os.path.dirname(os.path.realpath('__file__'))
 
@@ -91,13 +91,13 @@ print "Download complete."
 # Clean environment
 del banki_table, months, years, ind_codes, end_month, end_year, i, j, k, time_end, time_start, url
 
-#############################
-# Merge with CBR summer data
-#############################
+###############################################################################
+## Merge with local CBR summer data
+###############################################################################
 
 print "Preparing data..."
 
-# Indicators are now column-wise.
+# Indicators will now be column-wise.
 banki_wide = pd.pivot_table(banki_final,
     index=['time_end', 'lic_num'], columns='ind',values='ind_end')
     
@@ -144,9 +144,6 @@ for row in cbr_banki.itertuples(name='row'):
 cbr_banki.drop(['1600','1700','1800'], axis=1, inplace=True)
 
 print "    Calculating months until revocations..." 
-
-#cbr_banki = cbr_banki.assign(months = cbr_banki.time_end_y -
-#    cbr_banki.time_end_x)
 
 max_dates = cbr_banki.groupby('lic_num').agg({'time_end' : np.max}).reset_index()
 
