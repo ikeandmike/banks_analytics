@@ -3,12 +3,9 @@ import pandas as pd
 execfile("load_banki.py")
 execfile("load_banki_revoked.py")
 
-def merge_banki_revoked ():
 
-    banki = load_banki()
-    
-    revoked = load_banki_revoked()
-    
+# Takes banki dataset and banki's revoked dataset and merges them.
+def merge_banki_revoked (banki, revoked):
 
     merged = banki.merge(revoked, how='left', on='lic_num')
 

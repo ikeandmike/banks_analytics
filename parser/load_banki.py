@@ -153,7 +153,7 @@ def load_banki (ind_codes = None, update=False, redownload=False):
     ## Cleanup Data
     ############################################################################
 
-    #print "Preparing data..."
+    print "Preparing..."
 
     # Indicators will now be column-wise.
     if not update:
@@ -175,61 +175,10 @@ def load_banki (ind_codes = None, update=False, redownload=False):
 
     banki_wide.sort_values(['lic_num', 'period'], ascending=[True, False], inplace=True)
 
+    print "Writing to file..."
+
     banki_wide.to_csv("../csv/banki.csv", index=False)
 
+    print "Process complete. Returning banki dataset."
+
     return banki_wide
-####################################### STOP HERE FOR NOW ######################
-    print "    Loading local CBR data..." 
-
-    # Load in the summer CBR data.
-    cbr = pd.read_csv("../csv/cbr_summer.csv")
-
-    # Convert columns to proper formats
-    cbr['period'] = pd.to_datetime(cbr['period'])
-    cbr['lic_num'] = cbr['lic_num'].astype(int)
-
-    print "    Merging..." 
-
-    # Merge CBR with banki.
-    cbr_banki = pd.merge(cbr, banki_wide, how="outer",
-        on=['lic_num','period'])
-
-    cbr_banki.sort_values(['lic_num','period'])
-
-    # banki's N2 and N3 are in percent format but CBR's were not.
-    cbr_banki['1700'] = cbr_banki['1700'] / 100
-    cbr_banki['1800'] = cbr_banki['1800'] / 100
-
-    print "    Copying missing values..."  
-
-    # If CBR is missing any data, we'll copy it from banki.
-    for row in cbr_banki.itertuples(name='row'):
-        
-        # If N1 (cbr) is empty, fill it with 1600 (banki)
-        if pd.isnull(row[4]): cbr_banki = cbr_banki.set_value(row[0], 'N1', row[12])
-        
-        # If N2 (cbr) is empty, fill it with 1700 (banki)
-        if pd.isnull(row[5]): cbr_banki = cbr_banki.set_value(row[0], 'N2', row[13])
-        
-        # If N3 (cbr) is empty, fill it with 1800 (banki)
-        if pd.isnull(row[6]): cbr_banki = cbr_banki.set_value(row[0], 'N3', row[14])
-
-    # Now that we've copied from banki, we can delete the banki columns.
-    cbr_banki.drop(['1600','1700','1800'], axis=1, inplace=True)
-
-    print "    Calculating months until revocations..." 
-
-    max_dates = cbr_banki.groupby('lic_num').agg({'period' : np.max}).reset_index()
-
-    cbr_banki = pd.merge(cbr_banki, max_dates, how="left", on='lic_num')
-
-    for row in cbr_banki.itertuples():
-        cbr_banki = cbr_banki.set_value(row[0], 'months',
-            12 * (row[-1].year - row[1].year) +
-            (row[-1].month - row[1].month))
-
-    print "    Writing to file."
-
-    cbr_banki.to_csv("../csv/model_data_py.csv")
-
-    print "Process complete."
