@@ -6,9 +6,9 @@ import os
 
 execfile("../banks_analytics/dictionaries.py")
 
-###############################################################################
+###############################
 ## Download from banki.ru
-###############################################################################
+###############################
 
 # Downloads banking indicators for all available datetimes on banki.ru
 # param ind_codes A single code or an array of indicator codes. These
@@ -76,7 +76,7 @@ def load_banki (ind_codes = None, update=False, redownload=False):
                 time_end = str(end_year) + "-" + str(end_month) + "-01"
                 time_start = str(i) + "-" + str(j) + "-01"
 
-                sys.stdout.write ("\rPeriod: " + time_end[0:-3])
+                sys.stdout.write ("\rPeriod: " + time_end[0:-3] + " ")
                 sys.stdout.flush()
                 
                 # Contructs the url which requests the download from banki.ru
@@ -94,31 +94,29 @@ def load_banki (ind_codes = None, update=False, redownload=False):
                 # If nothing was downloaded, then skip to the next date.
                 if banki_table.empty:
                     break
-                    
-                #banki_table.to_csv("/Users/jabortell/Desktop/test.csv")
 
-                # Change names. Notice the 'empty' column. For some reason, banki's dataset has a one long empty column of NAs.
-
+                # Change names. For tables of column length 9, the names are fine.
+                # But for 8-length, the names are wonky, and the last column is all NAs.
                 if len(banki_table.columns) == 9:
                     banki_table.columns = ['rating', 'rating_change', 'bank_name','lic_num',
                                            'region', 'ind_val', 'ind_start', 'change', 'perc_change']
-                    try:
-                        banki_table.drop(['rating'])
-                    except:
-                        pass
-                    try:
-                        banki_table.drop(['change'])
-                    except:
-                        pass
+#                    try:
+                    banki_table.drop(['rating'], axis=1, inplace=True) # TODO: is this doing anything?
+#                    #except:
+#                        pass
+#                    try:
+                    banki_table.drop(['change'], axis=1, inplace=True) # TODO: anything at all?
+#                    except:
+#                        pass
                 else:                       
                     banki_table.columns = ['rating_change', 'bank_name', 'lic_num',
                                            'region', 'ind_val', 'ind_start', 'perc_change', 'empty']
-                    banki_table.drop('empty',axis=1, inplace=True)
+                    banki_table.drop('empty', axis=1, inplace=True)
 
                 # Drop unimportant columns
                 banki_table.drop(['rating_change', 'ind_start', 'perc_change'], axis = 1, inplace = True)
                 
-                # Clean data. For the end-of-the-month indicator value,
+                # For the end-of-the-month indicator value,
                 # we'll convert it to a number by first removing the
                 # white spaces and replacing the comma decimal
                 # with the point decimal.
@@ -133,32 +131,32 @@ def load_banki (ind_codes = None, update=False, redownload=False):
                 banki_table['period'] = pd.Series(time_end, index = banki_table.index)
                 banki_table['period'] = pd.to_datetime(banki_table['period'])
 
+                # If we're updating, then all the columns already exist.
+                # Merge instead of append.
                 if update:
                     banki_final = pd.merge(banki_final, banki_table, how='left', on=['lic_num','period'])
                 else:
                     banki_final = banki_final.append(banki_table)
-
-                #print banki_final.head().to_string()
                 
             # End j (months)
         # End i (years)
     # End k (indicators)
 
-    print "Download complete."
+    sys.stdout.write ("\nDownload complete.")
 
     # Clean environment
     #del banki_table, , ind_codes, end_month, end_year, i, j, k, time_end, time_start, url
 
-    ###############################################################################
+    ###############################
     ## Cleanup Data
-    ############################################################################
+    ###############################
 
     print "Preparing..."
 
     # Indicators will now be column-wise.
     if not update:
         banki_wide = pd.pivot_table(banki_final,
-            index=['lic_num', 'period'], columns='ind',values='ind_val')
+            index=['lic_num', 'period'], columns='ind', values='ind_val')
     else:
         banki_wide = banki_final
 
@@ -167,13 +165,10 @@ def load_banki (ind_codes = None, update=False, redownload=False):
     banki_wide.reset_index(inplace=True)
 
     banki_wide['lic_num'] = banki_wide['lic_num'].astype(int)
-
     banki_wide.drop_duplicates(['lic_num', 'period'], keep=False, inplace=True)
-
     banki_wide.sort_values(['lic_num', 'period'], ascending=[True, False], inplace=True)
 
     print "Writing to file..."
-
     banki_wide.to_csv("../csv/banki.csv", index=False)
 
     print "Process complete. Returning banki dataset."
