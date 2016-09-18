@@ -45,37 +45,47 @@ execfile("merge_banki_revoked.py")
 ## Create model data and export
 ###############################
 
+
+# Collect requests for indicator_I divided by indicator_j
 new_ratios = {}
+# Collect requests for "Is indicator within its range?"
 new_bin_ranges = []
 
+# Helper list.
 select = args.select[:]
 
 # If there were select-column arguments given,
-# check if they are correctly named.
-# But first check if they are a mathematical operation.
-
+# check if there is a request for division or range calculation.
 if not args.select == None:
     for i in args.select:
         if not (i in ind_dict_banki_ru()['ind_name']):
-            # First check if it has a mathematical operation.
+            # Check if there was passed an indicator_i/indicator_j
             try:
+            	# If there is no "/", string.index returns ValueError.
                 string.index(i, "/")
+                # Get the operands.
                 ops = string.split(i, "/")
+                # Create new column name.
                 col_name = ops[0] + "_over_" + ops[1]
+                # Add to dictionary, {col_name : [op0, op1]}
                 new_ratios[col_name] = ops
+                # We're finished with this indicator equation.
                 select.remove(i)
+                # Add operands back as singular columns.
                 select.extend(ops)
             except ValueError:
                 pass
             # Check if it has ! for range operation.
             try:
                 string.index(i, "!")
+                # Keep the column name and ignore the bang.
                 col = string.split(i, "!")[0]
+                # Add to list.
                 new_bin_ranges.append(col)
+                # Finished.
                 select.remove(i)
             except ValueError:
-                pass
-            
+                pass 
         
 # If no columns were specified, get all the columns.
 else:
@@ -85,6 +95,7 @@ else:
 # just read in the local file.
 if not (args.update_banki or args.redownload_banki or args.update_revoked
         or args.redownload_revoked) and os.path.isfile("../csv/banki_complete.csv"):
+    # Read local csv
     banki = pd.read_csv("../csv/banki_complete.csv", index_col=False)
 # Otherwise, perform all updates and redownloads, merge, and calculate months.
 else:
@@ -99,27 +110,43 @@ else:
     # Merge the two.
     banki = merge_banki_revoked(banki, revoked)
 
+
+# Remove duplicates from select.
+select = list(set(select))
+
+# Now we're ready to modify and cleanup the final dataset.
+# Here, we add our singular columns and special requests to the table.
 model_data = banki[['lic_num', 'period', 'months'] + select]
 
 
 # Add new column binary classifiers to model_data.csv.
 for col in new_bin_ranges:
+	# The ratios are defined in dictionaries.py
     r = get_ratio(col)
 
+	# Add the new column with empty values. It keeps the ! in the name.
     model_data.insert(len(model_data.columns), col + "!", None)
     
+    # Calculate whether indicator-col is within its defined ratio.
     model_data[col + "!"] = model_data[col].apply(lambda x: r[0] < x < r[1])
-    model_data.rename(columns={'new_col':col}, inplace=True)
 
-# Add new columns ratios and their evaluations to model_data.csv.
+# Add new column ratios and their evaluations to model_data
 for col_name, ops in new_ratios.iteritems():
 
+	# Evaluate a separate Series. Divide indicator_i by indicator_j
     col_eval = model_data[ops[0]] / model_data[ops[1]]
+    
+    # If the user specified that they wanted, for example, N2! as well as N2,
+    # then make sure we remove it from ops, so we don't remove it
+    # from model_data.
     for col in new_bin_ranges:
         if col in ops:
             ops.remove(col)
+    # Remove operands if they weren't requested to stay.
     model_data.drop(ops, axis=1, inplace=True)
+    # Add the new column to model_data
     model_data = model_data.assign(new_col = col_eval)
+    # Rename the column to the actual name we defined earlier.
     model_data.rename(columns={'new_col':col_name}, inplace=True)
             
 
