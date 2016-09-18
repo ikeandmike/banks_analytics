@@ -45,7 +45,8 @@ execfile("merge_banki_revoked.py")
 ## Create model data and export
 ###############################
 
-new_cols = {}
+new_ratios = {}
+new_bin_ranges = []
 
 select = args.select[:]
 
@@ -61,14 +62,20 @@ if not args.select == None:
                 string.index(i, "/")
                 ops = string.split(i, "/")
                 col_name = ops[0] + "_over_" + ops[1]
-                new_cols[col_name] = ops
+                new_ratios[col_name] = ops
                 select.remove(i)
                 select.extend(ops)
             except ValueError:
-                # If not, then it must be a badly formed name.
-                print "No indicator named " + i + " in dictionary."
-                print "Exiting..."
-                raise SystemExit(0)
+                pass
+            # Check if it has ! for range operation.
+            try:
+                string.index(i, "!")
+                col = string.split(i, "!")[0]
+                new_bin_ranges.append(col)
+                select.remove(i)
+            except ValueError:
+                pass
+            
         
 # If no columns were specified, get all the columns.
 else:
@@ -95,12 +102,26 @@ else:
 model_data = banki[['lic_num', 'period', 'months'] + select]
 
 
-# Add new columns and their evaluations to model_data.csv.
-for col_name, ops in new_cols.iteritems():
+# Add new column binary classifiers to model_data.csv.
+for col in new_bin_ranges:
+    r = get_ratio(col)
+
+    model_data.insert(len(model_data.columns), col + "!", None)
+    
+    model_data[col + "!"] = model_data[col].apply(lambda x: r[0] < x < r[1])
+    model_data.rename(columns={'new_col':col}, inplace=True)
+
+# Add new columns ratios and their evaluations to model_data.csv.
+for col_name, ops in new_ratios.iteritems():
+
     col_eval = model_data[ops[0]] / model_data[ops[1]]
+    for col in new_bin_ranges:
+        if col in ops:
+            ops.remove(col)
     model_data.drop(ops, axis=1, inplace=True)
     model_data = model_data.assign(new_col = col_eval)
     model_data.rename(columns={'new_col':col_name}, inplace=True)
+            
 
 print "Writing model data to file..."
 

@@ -1,3 +1,5 @@
+import sys
+
 # dictionary of indicators for banki.ru
 def ind_dict_banki_ru():
     return {'ind_num':[10,   # [0] net_assets
@@ -60,3 +62,62 @@ def get_ind(inds):
     if len(result) == 1: result = result[0]
 
     return result
+
+# Ranges for ratios. Ranges are dummy values right now.
+# Ratios with no lower or upper bound will be assigned
+# the min or max size of int, respectively.
+def ratio_dict():
+    return {'ind_name':['net_assets',            # [0] 
+                        'net_profit',            # [1] 
+                        'equity_form123',        # [2] 
+                        'equity_form134',        # [3] 
+                        'loans',                 # [4]
+                        'overdue_loans',         # [5]
+                        'individuals_deposits',  # [6]
+                        'securities',            # [7]
+                        'return_on_net_assets',  # [8]
+                        'return_on_equity',      # [9]
+                        'overdue_loans_share',   # [10]
+                        'reserve_to_loans',      # [11]
+                        'mortaged_property_to_loans', # [12]
+                        'foreign_currency_operations_to_net_assets', # [13]
+                        'foreign_currency_operations_rub',           # [14]
+                        'N1',  # [15]
+                        'N2',  # [16]
+                        'N3'], # [17]
+            'ind_ratio':[[0, 1], # [0] net_assets
+                         [0, 1], # [1] net_profit
+                         [0, 1], # [2] equity_form123
+                         [0, 1], # [3] equity_form134
+                         [0, 1], # [4] loans
+                         [0, 1], # [5] overdue_loans
+                         [0, 1], # [6] individuals_deposits
+                         [0, 1], # [7] securities
+                         [0, 1], # [8] return_on_net_assets
+                         [0, sys.maxint], # [9] return_on_equity
+                         [0, 1], # [10] overdue_loans_share
+                         [0, 1], # [11] reserve_to_loans
+                         [0, 1], # [12] mortaged_property_to_loans
+                         [0, 1], # [13] foreign_currency_operations_to_net_assets
+                         [0, 1], # [14] foreign_currency_operations_rub
+                         [-sys.maxint-1, 1], # [15] N1
+                         [100, 300], # [16] N2
+                         [0, 1]]} # [17] N3
+                
+def get_ratio(inds):
+
+    if type(inds) is not list: inds = [inds]
+
+    result = []
+    for i in inds:
+        try:
+            pos = ratio_dict()['ind_name'].index(i)
+        except ValueError:
+            print "No indicator " + str(i)
+            return None
+        result.append(ratio_dict()['ind_ratio'][pos])
+
+    if len(result) == 1: result = result[0]
+
+    return result
+    
