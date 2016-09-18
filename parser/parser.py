@@ -2,6 +2,9 @@ import pandas as pd
 import numpy as np
 import datetime as dt
 import argparse
+import string
+
+pd.options.mode.chained_assignment = None
 
 ###############################
 ## Instantiate Script Arguments
@@ -42,14 +45,31 @@ execfile("merge_banki_revoked.py")
 ## Create model data and export
 ###############################
 
+new_cols = {}
+
+select = args.select[:]
+
 # If there were select-column arguments given,
 # check if they are correctly named.
+# But first check if they are a mathematical operation.
+
 if not args.select == None:
     for i in args.select:
         if not (i in ind_dict_banki_ru()['ind_name']):
-            print "No indicator named " + i + " in dictionary."
-            print "Exiting..."
-            raise SystemExit(0)
+            # First check if it has a mathematical operation.
+            try:
+                string.index(i, "/")
+                ops = string.split(i, "/")
+                col_name = ops[0] + "_over_" + ops[1]
+                new_cols[col_name] = ops
+                select.remove(i)
+                select.extend(ops)
+            except ValueError:
+                # If not, then it must be a badly formed name.
+                print "No indicator named " + i + " in dictionary."
+                print "Exiting..."
+                raise SystemExit(0)
+        
 # If no columns were specified, get all the columns.
 else:
     args.select = ind_dict_banki_ru()['ind_name']
@@ -72,7 +92,15 @@ else:
     # Merge the two.
     banki = merge_banki_revoked(banki, revoked)
 
-model_data = banki[['lic_num', 'period', 'months'] + args.select]
+model_data = banki[['lic_num', 'period', 'months'] + select]
+
+
+# Add new columns and their evaluations to model_data.csv.
+for col_name, ops in new_cols.iteritems():
+    col_eval = model_data[ops[0]] / model_data[ops[1]]
+    model_data.drop(ops, axis=1, inplace=True)
+    model_data = model_data.assign(new_col = col_eval)
+    model_data.rename(columns={'new_col':col_name}, inplace=True)
 
 print "Writing model data to file..."
 
