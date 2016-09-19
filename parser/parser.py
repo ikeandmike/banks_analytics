@@ -148,7 +148,7 @@ for col in new_bin_ranges:
     model_data.insert(len(model_data.columns), col + "!", None)
     
     # Calculate whether indicator-col is within its defined ratio.
-    model_data[col + "!"] = model_data[col].apply(lambda x: r[0] < x < r[1])
+    model_data[col + "!"] = model_data[col].apply(lambda x: r[0] <= x <= r[1])
 
 # Add new column ratios and their evaluations to model_data
 for col_name, ops in new_ratios.iteritems():
