@@ -1,12 +1,9 @@
 *~
 .~*
 *.pyc
+*.txt
 out/
-<<<<<<< HEAD
-
 parser/.DS_Store
 .DS_Store
 csv/model_data.csv
-=======
 banks_analytics/.idea/*
->>>>>>> origin/master
