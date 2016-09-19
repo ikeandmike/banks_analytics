@@ -87,7 +87,7 @@ def load_banki (ind_codes = None, update=False, redownload=False):
                     "&IS_SHOW_GROUP=0&IS_SHOW_LIABILITIES=0"
                     
                 # Read the table from the url as csv into banki_table.
-                banki_table = pd.read_csv(url, delimiter=";", \
+                banki_table = pd.read_csv(url, delimiter=";",
                     skiprows=3, error_bad_lines=False, warn_bad_lines=True)
                 
                 # If nothing was downloaded, then skip to the next date.
