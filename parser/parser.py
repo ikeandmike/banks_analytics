@@ -27,8 +27,8 @@ group_revoked.add_argument("-rr", "--redownload-revoked", action="store_true",
                            help="Redownload banki.ru revocation dataset.")
 
 # User can pass column names to the script
-parser.add_argument("-s", "--select", metavar="COLUMS", nargs='*',
-                    help="Select columns from indicator dataset to use in model.")
+parser.add_argument("-s", "--select", metavar="COLUMNS", nargs='*',
+                    help="Select columns from indicator dataset to use in model. To receive binary indicators (ie. is indicator in acceptable range) add a bang after the indicator (ie. 'N1!'). To receive ratios of indicators, specify with a slash (ie. 'N1/N2').")
 
 args = parser.parse_args()
 
@@ -88,7 +88,7 @@ if not args.select == None:
         
 # If no columns were specified, get all the columns.
 else:
-    args.select = ind_dict_banki_ru()['ind_name']
+    select = ind_dict_banki_ru()['ind_name']
     
 ###############################
 ## Load banki.ru datasets

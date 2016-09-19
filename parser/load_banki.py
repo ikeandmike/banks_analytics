@@ -75,9 +75,8 @@ def load_banki (ind_codes = None, update=False, redownload=False):
                 # Our ending and starting dates.
                 time_end = str(end_year) + "-" + str(end_month) + "-01"
                 time_start = str(i) + "-" + str(j) + "-01"
-
-				sys.stdout.flush()
-                sys.stdout.write ("\rPeriod: " + time_end[0:-3])
+                sys.stdout.flush()
+                sys.stdout.write("\rPeriod: " + time_end[0:-3])
                 
                 # Contructs the url which requests the download from banki.ru
                 url = "http://www.banki.ru/banks/ratings/export.php?LANG=en&" + \
