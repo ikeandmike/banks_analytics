@@ -7,12 +7,12 @@ import os
 execfile("../banks_analytics/dictionaries.py")
 
 ###############################
-## Download from banki.ru
+## Prepare download process
 ###############################
 
 # Downloads banking indicators for all available datetimes on banki.ru
 # param ind_codes A single code or an array of indicator codes. These
-#   codes are defined by banki.ru
+#   codes are defined by banki.ru and held in dictionaries.py
 # returns Pandas DataFrame of dataset. Writes to csv.
 def load_banki (ind_codes = None, update=False, redownload=False):
 
@@ -27,9 +27,11 @@ def load_banki (ind_codes = None, update=False, redownload=False):
     # If the file doesn't exist, then we'll have to redownload anyway.
     if (not br_exists) or redownload:
         banki_final = pd.DataFrame()
+        # We'll start at the first year available.
         start_year_download = 2008
         start_month_download = 1
-        if ind_codes == None: ind_codes = ind_dict_banki_ru()['ind_num']
+        # We'll download all indicators.
+        ind_codes = ind_dict_banki_ru()['ind_num']
         if not br_exists:
             print "No local dataset found. Re-downloading full dataset."
     # If the file exists, and the user doesn't want to update it,
@@ -38,10 +40,10 @@ def load_banki (ind_codes = None, update=False, redownload=False):
     #   and read banki.ru, stopping as soon as there are duplicates.
     elif br_exists:
         if not update:
-            return pd.read_csv(br_file, encoding='windows-1251')
+            return pd.read_csv(br_file)
         else:
             print "Updating..."
-            banki_final = pd.read_csv(br_file, index_col=0, encoding='windows-1251')
+            banki_final = pd.read_csv(br_file)
             banki_final['period'] = pd.to_datetime(banki_final['period'])
             start_year_download = now.year
             if now.month == 1:
@@ -49,13 +51,11 @@ def load_banki (ind_codes = None, update=False, redownload=False):
             else:
                 start_month_download = now.month - 1
             if ind_codes == None:
-                ind_codes = list(banki_final.columns.values)[2:]
+                ind_codes = ind_dict_banki_ru()['ind_num']
 
-
-    # This empty data frame will collect all the tables from banki.
-    # In other words, we'll collect data from banki in temporary tables
-    # and append them to the banki_final.
-    #banki_final = pd.DataFrame()
+###############################
+## Download banki.ru dataset
+###############################
 
     # For each indicator, for every month of every year.
     for k in ind_codes:
@@ -76,8 +76,8 @@ def load_banki (ind_codes = None, update=False, redownload=False):
                 time_end = str(end_year) + "-" + str(end_month) + "-01"
                 time_start = str(i) + "-" + str(j) + "-01"
 
-                sys.stdout.write ("\rPeriod: " + time_end[0:-3] + " ")
-                sys.stdout.flush()
+				sys.stdout.flush()
+                sys.stdout.write ("\rPeriod: " + time_end[0:-3])
                 
                 # Contructs the url which requests the download from banki.ru
                 url = "http://www.banki.ru/banks/ratings/export.php?LANG=en&" + \
@@ -127,8 +127,10 @@ def load_banki (ind_codes = None, update=False, redownload=False):
                 
                 # Remember important details about this dataset, such as
                 # the indicator and date.
-                banki_table['ind'] = pd.Series(get_ind(k), index = banki_table.index)
-                banki_table['period'] = pd.Series(time_end, index = banki_table.index)
+                banki_table['ind'] = pd.Series(get_ind(k),
+                	index = banki_table.index)
+                banki_table['period'] = pd.Series(time_end,
+                	index = banki_table.index)
                 banki_table['period'] = pd.to_datetime(banki_table['period'])
 
                 # If we're updating, then all the columns already exist.
@@ -144,12 +146,9 @@ def load_banki (ind_codes = None, update=False, redownload=False):
 
     sys.stdout.write ("\nDownload complete.")
 
-    # Clean environment
-    #del banki_table, , ind_codes, end_month, end_year, i, j, k, time_end, time_start, url
-
-    ###############################
-    ## Cleanup Data
-    ###############################
+################################
+## Prepare for Export and Return
+################################
 
     print "Preparing..."
 
@@ -160,8 +159,8 @@ def load_banki (ind_codes = None, update=False, redownload=False):
     else:
         banki_wide = banki_final
 
-    # The pivot_table created MultiIndex-style indices, but we'd like the table
-    # to be flat.
+    # The pivot_table created MultiIndex-style indices,
+    # but we'd like the table to be flat.
     banki_wide.reset_index(inplace=True)
 
     banki_wide['lic_num'] = banki_wide['lic_num'].astype(int)

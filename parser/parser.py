@@ -7,7 +7,7 @@ import string
 pd.options.mode.chained_assignment = None
 
 ###############################
-## Instantiate Script Arguments
+## Set Command Line Options
 ###############################
 
 parser = argparse.ArgumentParser()
@@ -42,9 +42,8 @@ execfile("load_banki_revoked.py")
 execfile("merge_banki_revoked.py")
 
 ###############################
-## Create model data and export
+## Parse Command-Line Arguments
 ###############################
-
 
 # Collect requests for indicator_I divided by indicator_j
 new_ratios = {}
@@ -79,9 +78,9 @@ if not args.select == None:
             try:
                 string.index(i, "!")
                 # Keep the column name and ignore the bang.
-                col = string.split(i, "!")[0]
+                col_name = string.split(i, "!")[0]
                 # Add to list.
-                new_bin_ranges.append(col)
+                new_bin_ranges.append(col_name)
                 # Finished.
                 select.remove(i)
             except ValueError:
@@ -90,6 +89,10 @@ if not args.select == None:
 # If no columns were specified, get all the columns.
 else:
     args.select = ind_dict_banki_ru()['ind_name']
+    
+###############################
+## Load banki.ru datasets
+###############################
 
 # If there are no update or redownload requests, and the file exists,
 # just read in the local file.
@@ -110,6 +113,10 @@ else:
     # Merge the two.
     banki = merge_banki_revoked(banki, revoked)
 
+
+#############################################
+## Post-Processing for Command-Line Arguments
+#############################################
 
 # Remove duplicates from select.
 select = list(set(select))
@@ -142,13 +149,17 @@ for col_name, ops in new_ratios.iteritems():
     for col in new_bin_ranges:
         if col in ops:
             ops.remove(col)
+    
     # Remove operands if they weren't requested to stay.
     model_data.drop(ops, axis=1, inplace=True)
     # Add the new column to model_data
     model_data = model_data.assign(new_col = col_eval)
     # Rename the column to the actual name we defined earlier.
     model_data.rename(columns={'new_col':col_name}, inplace=True)
-            
+
+###############################
+## Write to File
+###############################      
 
 print "Writing model data to file..."
 

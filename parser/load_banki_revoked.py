@@ -3,7 +3,7 @@ import os
 import sys
 
 # banki.ru records the dates of license revocations in webpage-separated
-# html tables. One webpage has about 50 records. When the page index becomes
+# html tables. One webpage has 50 records. When the page index becomes
 # greater than the actual number of pages, instead of showing an empty
 # table, it returns to Page 1, but the index keeps incrementing.
 # Highly inconvenient.
@@ -11,7 +11,7 @@ import sys
 # Instead, in order to detect when we've reached the end of banki's
 # dataset, we'll keep downloading until we find the first duplicate.
 # If a csv already exists, then we'll check it first, then check
-# banki's most reset records.
+# banki's most recent records.
 
 # param update If banki_revoked.csv exists then it will
 #              fetch updates from banki.ru
@@ -39,27 +39,32 @@ def load_banki_revoked(update=False, redownload=False):
             return pd.read_csv(br_file)
         else:
             print "Updating..."
-            banki_revoked = pd.read_csv(br_file, index_col=0)
+            banki_revoked = pd.read_csv(br_file)
             banki_revoked['period'] = pd.to_datetime(banki_revoked['period'])
 
     i = 1
     while True:
-        sys.stdout.write("\rReading Pages... " + str(i))
         sys.stdout.flush()
+        sys.stdout.write("\rReading Pages... " + str(i))
         url = 'http://www.banki.ru/banks/memory/?PAGEN_1=' + str(i)
+        # The content we want is in [2] of the returned web thingy.
         tmp = pd.read_html(url)[2]
+        # Rename columns
         tmp.columns = ['idx', 'bank', 'lic_num', 'cause', 'revoc_date', 'region']
         tmp.drop(['idx', 'bank', 'region', 'cause'], axis=1, inplace=True)
         tmp['revoc_date'] = pd.to_datetime(tmp['revoc_date'])
+        # Remove rows whose license numbers have "-" + character.
         if tmp['lic_num'].dtype == 'object':
             tmp = tmp[~tmp.lic_num.str.contains("-")]
         tmp['lic_num'] = tmp['lic_num'].astype(int)
         banki_revoked = banki_revoked.append(tmp)
+        # As soon as we find a duplicate, break.
         d = banki_revoked.duplicated(['lic_num', 'revoc_date'])
         if any(d): break
         i += 1
 
     print "Cleaning..."
+    # Actually remove duplicates.
     banki_revoked.drop_duplicates(['lic_num', 'revoc_date'],
                                   keep = False, inplace = True)
 
