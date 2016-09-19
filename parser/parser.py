@@ -176,6 +176,8 @@ for col_name, ops in new_ratios.iteritems():
     model_data = model_data.assign(new_col = col_eval)
     # Rename the column to the actual name we defined earlier.
     model_data.rename(columns={'new_col':col_name}, inplace=True)
+    
+    model_data[col_name] = model_data[col_name].replace(np.inf, np.nan)
 
 ###############################
 ## Write to File
