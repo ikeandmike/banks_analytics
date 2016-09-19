@@ -96,6 +96,7 @@ if not args.select == None:
                         # Add to list.
                         new_bin_ranges.append(col_name)
                         # Finished.
+                        select.append(col_name)
                         select.remove(i)
                     except ValueError:
                         pass 
