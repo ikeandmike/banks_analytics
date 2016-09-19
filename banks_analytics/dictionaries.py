@@ -84,7 +84,13 @@ def ratio_dict():
                         'foreign_currency_operations_rub',           # [14]
                         'N1',  # [15]
                         'N2',  # [16]
-                        'N3'], # [17]
+                        'N3',  # [17]
+                        'N4',  # [18]
+                        'N6',  # [19]
+                        'N7',  # [20]
+                        'N9_1', # [21]
+                        'N10_1', # [22]
+                        'N12'] # [23]
             'ind_ratio':[[0, 1], # [0] net_assets
                          [0, 1], # [1] net_profit
                          [0, 1], # [2] equity_form123
@@ -102,7 +108,13 @@ def ratio_dict():
                          [0, 1], # [14] foreign_currency_operations_rub
                          [-sys.maxint-1, 1], # [15] N1
                          [100, 300], # [16] N2
-                         [0, 1]]} # [17] N3
+                         [0.5,sys.maxint]  # [17] N3
+                         [-sys.maxint-1,1.2]   # [18] N4
+                         [-sys.maxint-1,0.25]   # [19] N6
+                         [-sys.maxint-1,8.0]   # [20] N7
+                         [-sys.maxint-1,0.5]   # [21] N9_1
+                         [-sys.maxint-1,0.03]   # [22] N10_1
+                         [-sys.maxint-1,0.25]]} # [23] N12
                 
 def get_ratio(inds):
 
