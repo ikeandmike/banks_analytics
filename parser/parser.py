@@ -50,41 +50,54 @@ new_ratios = {}
 # Collect requests for "Is indicator within its range?"
 new_bin_ranges = []
 
-# Helper list.
-select = args.select[:]
 
 # If there were select-column arguments given,
 # check if there is a request for division or range calculation.
 if not args.select == None:
-    for i in args.select:
-        if not (i in ind_dict_banki_ru()['ind_name']):
-            # Check if there was passed an indicator_i/indicator_j
-            try:
-            	# If there is no "/", string.index returns ValueError.
-                string.index(i, "/")
-                # Get the operands.
-                ops = string.split(i, "/")
-                # Create new column name.
-                col_name = ops[0] + "_over_" + ops[1]
-                # Add to dictionary, {col_name : [op0, op1]}
-                new_ratios[col_name] = ops
-                # We're finished with this indicator equation.
-                select.remove(i)
-                # Add operands back as singular columns.
-                select.extend(ops)
-            except ValueError:
-                pass
-            # Check if it has ! for range operation.
-            try:
-                string.index(i, "!")
-                # Keep the column name and ignore the bang.
-                col_name = string.split(i, "!")[0]
-                # Add to list.
-                new_bin_ranges.append(col_name)
-                # Finished.
-                select.remove(i)
-            except ValueError:
-                pass 
+        # Helper list
+        select = args.select[:]
+        for i in args.select:
+                if not (i in ind_dict_banki_ru()['ind_name']):
+                    # Check if there was passed an indicator_i/indicator_j
+                    try:
+                        # If there is no "/", string.index returns ValueError.
+                        string.index(i, "/")
+                        # Get the operands.
+                        ops = string.split(i, "/")
+                        
+                        for ind in ops:
+                        	if not ind in ind_dict_banki_ru()['ind_name']:
+                        		print "No indicator named",ind
+                        		print "Exiting..."
+                        		raise SystemExit(0)
+                        
+                        # Create new column name.
+                        col_name = ops[0] + "_over_" + ops[1]
+                        # Add to dictionary, {col_name : [op0, op1]}
+                        new_ratios[col_name] = ops
+                        # We're finished with this indicator equation.
+                        select.remove(i)
+                        # Add operands back as singular columns.
+                        select.extend(ops)
+                    except ValueError:
+                        pass
+                    # Check if it has ! for range operation.
+                    try:
+                        string.index(i, "!")
+                        # Keep the column name and ignore the bang.
+                        col_name = string.split(i, "!")[0]
+                        r = get_ratio(col_name)
+                        if r == None:
+                        	print "No ratio for", col_name
+                        	print "Exiting..."
+                        	raise SystemExit(0)
+                        # Add to list.
+                        new_bin_ranges.append(col_name)
+                        # Finished.
+                        select.append(col_name)
+                        select.remove(i)
+                    except ValueError:
+                        pass 
         
 # If no columns were specified, get all the columns.
 else:

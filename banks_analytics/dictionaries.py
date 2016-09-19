@@ -90,6 +90,7 @@ def ratio_dict():
                         'N7',  # [20]
                         'N9_1', # [21]
                         'N10_1', # [22]
+<<<<<<< HEAD
                         'N12'] # [23]
             'ind_ratio':[[0, 1], # [0] net_assets
                          [0, 1], # [1] net_profit
@@ -114,6 +115,32 @@ def ratio_dict():
                          [-sys.maxint-1,8.0]   # [20] N7
                          [-sys.maxint-1,0.5]   # [21] N9_1
                          [-sys.maxint-1,0.03]   # [22] N10_1
+=======
+                        'N12'], # [23]
+            'ind_ratio':[None, # [0] net_assets
+                         None, # [1] net_profit
+                         None, # [2] equity_form123
+                         None, # [3] equity_form134
+                         None, # [4] loans
+                         None, # [5] overdue_loans
+                         None, # [6] individuals_deposits
+                         None, # [7] securities
+                         None, # [8] return_on_net_assets
+                         None, # [9] return_on_equity
+                         None, # [10] overdue_loans_share
+                         None, # [11] reserve_to_loans
+                         None, # [12] mortaged_property_to_loans
+                         None, # [13] foreign_currency_operations_to_net_assets
+                         None, # [14] foreign_currency_operations_rub
+                         [-sys.maxint-1, 1], # [15] N1
+                         [100, 300], # [16] N2
+                         [0.5,sys.maxint],  # [17] N3
+                         [-sys.maxint-1,1.2],   # [18] N4
+                         [-sys.maxint-1,0.25],   # [19] N6
+                         [-sys.maxint-1,8.0],   # [20] N7
+                         [-sys.maxint-1,0.5],   # [21] N9_1
+                         [-sys.maxint-1,0.03],   # [22] N10_1
+>>>>>>> fdf7192da360d33bc0a7576c45c44aa5de6ccf76
                          [-sys.maxint-1,0.25]]} # [23] N12
                 
 def get_ratio(inds):
