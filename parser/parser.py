@@ -64,6 +64,13 @@ if not args.select == None:
                         string.index(i, "/")
                         # Get the operands.
                         ops = string.split(i, "/")
+                        
+                        for ind in ops:
+                        	if not ind in ind_dict_banki_ru()['ind_name']:
+                        		print "No indicator named",ind
+                        		print "Exiting..."
+                        		raise SystemExit(0)
+                        
                         # Create new column name.
                         col_name = ops[0] + "_over_" + ops[1]
                         # Add to dictionary, {col_name : [op0, op1]}
@@ -79,6 +86,11 @@ if not args.select == None:
                         string.index(i, "!")
                         # Keep the column name and ignore the bang.
                         col_name = string.split(i, "!")[0]
+                        r = get_ratio(col_name)
+                        if r == None:
+                        	print "No ratio for", col_name
+                        	print "Exiting..."
+                        	raise SystemExit(0)
                         # Add to list.
                         new_bin_ranges.append(col_name)
                         # Finished.
