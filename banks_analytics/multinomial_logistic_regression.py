@@ -9,6 +9,7 @@
 
 import csv
 import sys
+import subprocess
 import numpy as np
 from sklearn import linear_model
 from sklearn.metrics import precision_score, recall_score, f1_score
@@ -24,31 +25,13 @@ from export_test import export_test	# A file I wrote to export results to a txt 
 np.set_printoptions(threshold=np.inf)
 np.set_printoptions(precision=3) # This one is a lot less scary, just sets number of printed digits
 
-############################### HELPER FUNCTIONS ###############################
-
-# Validates the list of features
-def validateFeatures(row, numFeatures):
-	for i in range(3,6):
-		if row[i] == "NA": return False
-
-	return True
-
-# TODO Replace above code with this after Jake updates data format
-#	for i in range(4, numFeatures+4):
-#		if row[i] == "NA": return False
-#	return True
-
-# Returns the average of the elements in arr
-# Assumes values in arr are numerical
-def ave(arr):
-	sum = 0
-	for item in arr:
-		sum += item
-	return float(sum) / float(arr.size)
-
 ################################## MODEL CODE ##################################
 
 print("WPI/Deloitte Regression Model for Predicting License Revocation of Russian Banks\n")
+
+# Run parser to generate custom model_data.csv file
+print("Generating datafile...")
+subprocess.call(["../parser/parser.py", "-s", "N1!", "N2!"], cwd="../parser") # Add additional options as addtional strings within array
 
 print("Importing data...")
 with open('../csv/model_data.csv', 'rb') as csvfile:
@@ -58,39 +41,62 @@ with open('../csv/model_data.csv', 'rb') as csvfile:
 
 	for row in my_reader:	# Iterate over all rows in csv
 		if firstRow == False:
-			if validateFeatures(row, numFeatures):
+			
+			target = float(row[2])	# Get target value from file
+			if target >= 0:		# Ignore negative targets (ie. values from after revocation)
 				
 				# Generate array of new features
 				new_feat = []
-				#for j in range(4, numFeatures+3): # Iterate over features, add to array
-				for j in range(3, 6): # TODO Replace this line with the above with new data format
-					new_feat.append(float(row[j]))
-				X = np.concatenate(( X, np.array([new_feat]) )) # Add the new entry onto the array
-			
-				#TODO Replace rest of block with this line after data format change
-				#Y = np.append(Y, float(row[3])+1) # Get target value from sheet
+				for j in range(3, numFeatures+3):	# Iterate over features, add to array
+					curr_feat = row[j]
 
-				if row[6] == "Norm" or row[6]  == "NA":			# If bank still has license
-					Y = np.append(Y, float(9000))			# Month value = 9000
-				elif int(row[12]) >= 24:				# If bank will lose license in more than 2 years
-					Y = np.append(Y, float(1000))			# Month value = 1000
-				else:
-					Y = np.append(Y, float(row[12])+1)		# Otherwise, grab number of months left from sheet
-s
+					# No data provided for this feature
+					if curr_feat == "":
+						new_feat.append(float(0))	# Meaningless value
+						new_feat.append(float(0))	# 0 = Value missing
+
+					else:
+						# Boolean values provided (for reporting in bounds / out of bounds)
+						if curr_feat == "True":
+							new_feat.append(float(1))	# 1 = In Bounds 
+
+						elif curr_feat == "False":
+							new_feat.append(float(0))	# 0 = Out of Bounds
+
+						# Numeric value provided (normal -- value of feature)
+						else:
+							new_feat.append(float(curr_feat)) # Use value of feature
+
+						new_feat.append(float(1)) # 1 = Value present
+			
+				if target < 1000: target += 1	# Months values start at 0 in file
+
+				X = np.concatenate(( X, np.array([new_feat]) )) # Add new feature set to array
+				Y = np.append(Y, target)			# Add new target to array
+
 		else:
 			firstRow = False
-			numFeatures = 3
-			#numFeatures = len(row)-4 # Everything past first four columns are features
-			# TODO Uncomment this and make changes to if block once Jake changes format of data file
-			# Using np.concatenate (see above if block) requires that
-			# the two arrays' have the same dimensions
-			# This block of code creates a "dummy" first element to
-			# make concatenate happy; it will be removed later
-			temp_arr = []
-			for j in range(numFeatures):
-				temp_arr.append(j)
-			X = np.array([temp_arr])
-			Y = np.array([]) # Going to form our target dataset
+			numFeatures = len(row)-3 # Everything past first three columns are features
+
+			# Notes on Dummy Row:
+			# Above, I use np.concatenate to generate the feature (X) set
+			# concatenate is very particular; it requires that the two arrays
+			# have the same dimension *and* the type of corresponding entries
+			# in the two arrays are the same. The dummy row satisfies this
+			# requirement; it is removed later
+
+			# Create array of feature labels and dummy row
+			feature_labels = []
+			dummy = []
+			for j in range(3, numFeatures+3):
+				feature_labels.append(row[j])		# Add feature name
+				feature_labels.append("%s_M?" % row[j])	# For missing column
+				dummy.append(j)				# Create dummy row for creating X
+				dummy.append(j)
+
+			# Create the feature and target datasets respectively
+			X = np.array([dummy])
+			Y = np.array([])
 
 		# Print dots to indicate progress		
 		if i % 350 == 0:
@@ -98,12 +104,15 @@ s
 			sys.stdout.flush()
 		i += 1
 
-X = np.delete(X, 0, 0) # Remove the initial dummy row
+X = np.delete(X, 0, 0) # Remove the dummy row
 
 print("\nFitting model...")
-
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.33, stratify=Y)	# Split data into testing & training, with 66% training, 33% testing
-results = ModelResults(X_train, X_test, Y_train, Y_test)					# Store values in ModelResults object
+results = ModelResults(X_train, X_test, Y_train, Y_test)				# Store values in ModelResults object
+
+with open("t.txt", "w") as myfile:
+	myfile.write(str(X))
+	myfile.close()
 
 # Create the model & fit to training data
 # If passed, use passed in C value
@@ -123,8 +132,8 @@ f1        = f1_score(Y_test, predict_arr, average=None)		# Calculate f1
 # If C value passed in, add results to file (used in script for testing several values of C)
 if len(sys.argv) > 1:
 	with open("../out/c_results.txt", "a") as myfile:
-		print("C: %f | F1: %f" % (float(sys.argv[1]), ave(f1)))
-		myfile.write("C: %f | P: %f | R: %f | F1: %f\n" % (float(sys.argv[1]), ave(precision), ave(recall), ave(f1)))
+		print("C: %f" % float(sys.argv[1]))
+		myfile.write("C: %f\n" % float(sys.argv[1]))
 		myfile.write("Precision:\n%s\n\n" % str(precision))
 		myfile.write("Recall:\n%s\n\n" % str(recall))
 		myfile.write("F1:\n%s\n\n" % str(f1))
@@ -138,10 +147,6 @@ print("Percent Correct: %s\n" % per_corr)
 print("Precision: %s\n" % precision)
 print("Recall: %s\n" % recall)
 print("f1: %s" % f1)
-
-print("T Precision %s" % ave(precision))
-print("T Recall %s" % ave(recall))
-print("T F1 %s" % ave(f1))
 
 print("\nExporting results...")
 extended, short = export_test(results)
