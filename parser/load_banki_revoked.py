@@ -63,7 +63,7 @@ def load_banki_revoked(update=False, redownload=False):
         if any(d): break
         i += 1
 
-    print "Cleaning..."
+    sys.stdout.write ("\nCleaning...")
     # Actually remove duplicates.
     banki_revoked.drop_duplicates(['lic_num', 'revoc_date'],
                                   keep = False, inplace = True)
