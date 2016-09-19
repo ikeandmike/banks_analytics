@@ -82,15 +82,15 @@ def ratio_dict():
                         'mortaged_property_to_loans', # [12]
                         'foreign_currency_operations_to_net_assets', # [13]
                         'foreign_currency_operations_rub',           # [14]
-                        'N1',  # [15]
-                        'N2',  # [16]
-                        'N3',  # [17]
-                        'N4',  # [18]
-                        'N6',  # [19]
-                        'N7',  # [20]
-                        'N9_1', # [21]
+                        'N1',    # [15]
+                        'N2',    # [16]
+                        'N3',    # [17]
+                        'N4',    # [18]
+                        'N6',    # [19]
+                        'N7',    # [20]
+                        'N9_1',  # [21]
                         'N10_1', # [22]
-                        'N12'], # [23]
+                        'N12'],  # [23]
             'ind_ratio':[None, # [0] net_assets
                          None, # [1] net_profit
                          None, # [2] equity_form123
@@ -99,21 +99,21 @@ def ratio_dict():
                          None, # [5] overdue_loans
                          None, # [6] individuals_deposits
                          None, # [7] securities
-                         None, # [8] return_on_net_assets
-                         None, # [9] return_on_equity
+                         [0.015,sys.maxint], # [8] return_on_net_assets
+                         [0.10,sys.maxint], # [9] return_on_equity
                          None, # [10] overdue_loans_share
                          None, # [11] reserve_to_loans
                          None, # [12] mortaged_property_to_loans
                          None, # [13] foreign_currency_operations_to_net_assets
                          None, # [14] foreign_currency_operations_rub
-                         [0.1,sys.maxint], # [15] N1
-                         [0.15,sys.maxint], # [16] N2
-                         [0.5,sys.maxint],  # [17] N3
+                         [0.1,sys.maxint],      # [15] N1
+                         [0.15,sys.maxint],     # [16] N2
+                         [0.5,sys.maxint],      # [17] N3
                          [-sys.maxint-1,1.2],   # [18] N4
-                         [-sys.maxint-1,0.25],   # [19] N6
+                         [-sys.maxint-1,0.25],  # [19] N6
                          [-sys.maxint-1,8.0],   # [20] N7
                          [-sys.maxint-1,0.5],   # [21] N9_1
-                         [-sys.maxint-1,0.03],   # [22] N10_1
+                         [-sys.maxint-1,0.03],  # [22] N10_1
                          [-sys.maxint-1,0.25]]} # [23] N12
                 
 def get_ratio(inds):
