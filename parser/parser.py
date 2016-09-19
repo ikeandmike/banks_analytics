@@ -93,11 +93,9 @@ if not args.select == None:
                         	print "No ratio for", col_name
                         	print "Exiting..."
                         	raise SystemExit(0)
-                        # Add to list.
                         new_bin_ranges.append(col_name)
-                        # Finished.
-                        select.append(col_name)
                         select.remove(i)
+                        
                     except ValueError:
                         pass 
         
@@ -134,12 +132,13 @@ else:
 #############################################
 
 # Remove duplicates from select.
+
+
 select = list(set(select))
 
 # Now we're ready to modify and cleanup the final dataset.
 # Here, we add our singular columns and special requests to the table.
 model_data = banki[['lic_num', 'period', 'months'] + select]
-
 
 # Add new column binary classifiers to model_data.csv.
 for col in new_bin_ranges:
@@ -151,6 +150,10 @@ for col in new_bin_ranges:
     
     # Calculate whether indicator-col is within its defined ratio.
     model_data[col + "!"] = model_data[col].apply(lambda x: r[0] <= x <= r[1])
+    
+    if not col in select:
+    	model_data.drop(col, axis=1, inplace=True)
+    
 
 # Add new column ratios and their evaluations to model_data
 for col_name, ops in new_ratios.iteritems():
