@@ -100,7 +100,7 @@ def ratio_dict():
                          None, # [6] individuals_deposits
                          None, # [7] securities
                          [0.015,sys.maxint], # [8] return_on_net_assets
-                         [0.10,sys.maxint], # [9] return_on_equity
+                         [0.08,sys.maxint], # [9] return_on_equity
                          None, # [10] overdue_loans_share
                          None, # [11] reserve_to_loans
                          None, # [12] mortaged_property_to_loans
