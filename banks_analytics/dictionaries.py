@@ -106,8 +106,8 @@ def ratio_dict():
                          [0, 1], # [12] mortaged_property_to_loans
                          [0, 1], # [13] foreign_currency_operations_to_net_assets
                          [0, 1], # [14] foreign_currency_operations_rub
-                         [-sys.maxint-1, 1], # [15] N1
-                         [100, 300], # [16] N2
+                         [0.1,sys.maxint], # [15] N1
+                         [0.15,sys.maxint], # [16] N2
                          [0.5,sys.maxint]  # [17] N3
                          [-sys.maxint-1,1.2]   # [18] N4
                          [-sys.maxint-1,0.25]   # [19] N6
