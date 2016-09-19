@@ -1,8 +1,5 @@
 import pandas as pd
-<<<<<<< HEAD
-=======
 import numpy as np
->>>>>>> 3b56633b6cbb88e2a5ff5718c8d7cba0bfdacde6
 import datetime as dt
 import sys
 import os
@@ -78,15 +75,8 @@ def load_banki (ind_codes = None, update=False, redownload=False):
                 # Our ending and starting dates.
                 time_end = str(end_year) + "-" + str(end_month) + "-01"
                 time_start = str(i) + "-" + str(j) + "-01"
-<<<<<<< HEAD
-                
                 sys.stdout.flush()
                 sys.stdout.write("\rPeriod: " + time_end[0:-3])
-=======
-
-				sys.stdout.flush()
-                sys.stdout.write ("\rPeriod: " + time_end[0:-3])
->>>>>>> 3b56633b6cbb88e2a5ff5718c8d7cba0bfdacde6
                 
                 # Contructs the url which requests the download from banki.ru
                 url = "http://www.banki.ru/banks/ratings/export.php?LANG=en&" + \
