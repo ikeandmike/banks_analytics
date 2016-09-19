@@ -1,164 +1,166 @@
 import pandas as pd
-from sys import stdout
-import os
 import numpy as np
+import datetime as dt
+import argparse
+import string
 
-#########################
-# Download from banki.ru
-#########################
+pd.options.mode.chained_assignment = None
 
-#wk_dir = os.path.dirname(os.path.realpath('__file__'))
+###############################
+## Set Command Line Options
+###############################
 
-#os.chdir(wk_dir)
+parser = argparse.ArgumentParser()
 
-# 1600 is N1, 1700 is N2, 1800 is N3
-ind_codes = ["1600", "1700", "1800"]
+# banki indicator dataset argument group
+group_banki = parser.add_mutually_exclusive_group()
+group_banki.add_argument("-ub", "--update-banki", action="store_true",
+                   help="Update banki.ru indicator dataset.")
+group_banki.add_argument("-rb", "--redownload-banki", action="store_true",
+                   help="Redownload banki.ru indicator dataset.")
 
-# We'll iterate through all date combinations.
-months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
-years = [2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016]
+# banki revoked dataset argument group
+group_revoked = parser.add_mutually_exclusive_group()
+group_revoked.add_argument("-ur", "--update-revoked", action="store_true",
+                           help="Update banki.ru revocation dataset.")
+group_revoked.add_argument("-rr", "--redownload-revoked", action="store_true",
+                           help="Redownload banki.ru revocation dataset.")
 
-# This empty data frame will collect all the tables from banki.
-# In other words, we'll collect data from banki in temporary tables
-# and append them to the banki_final.
-banki_final = pd.DataFrame()
+# User can pass column names to the script
+parser.add_argument("-s", "--select", metavar="COLUMS", nargs='*',
+                    help="Select columns from indicator dataset to use in model.")
 
-# For each indicator, for every month of every year.
-for k in ind_codes:
-    print ( "Downloading indicator " + k + "..." )
-    for i in years:
-        for j in months:
-            end_month = j + 1 # Recall that j is the iterating month.
-            end_year = i      # i is the iterating year.
-                              # The only case when end_year does not
-                              # equal i will be when the months are
-                              # between December and January.
-                              
-            if (j == 12):         # If the starting month is December
-                end_month = 1     # change the ending month to January,
-                end_year = i + 1  # and jump to the next year.
-            
-            # Our ending and starting dates.
-            time_end = str(end_year) + "-" + str(end_month) + "-01"
-            time_start = str(i) + "-" + str(j) + "-01"
-            
-            # Contructs the url which requests the download from banki.ru
-            url = "http://www.banki.ru/banks/ratings/export.php?LANG=en&" + \
-                "PROPERTY_ID=" + k + \
-                "&search[type]=name&sort_param=rating&sort_order=ASC&REGION_ID=0&" + \
-                "date1=" + time_end + \
-                "&date2=" + time_start + \
-                "&IS_SHOW_GROUP=0&IS_SHOW_LIABILITIES=0"
-                
-            # Read the table from the url as csv into banki_table.
-            banki_table = pd.read_csv(url, delimiter=";", \
-                skiprows=3, error_bad_lines=False, warn_bad_lines=True)
-                
-            # If nothing was downloaded, then skip to the next date.
-            if banki_table.empty:
-                break
-                
-            # Change names. Notice the 'empty' column. For some reason, banki's dataset has a one long empty column of NAs.
-            banki_table.columns = ['rating.change', 'bank.name', 'lic_num', \
-                'region', 'ind_end', 'ind.start', 'perc.change', 'empty']
+args = parser.parse_args()
 
-            # Drop unimportant columns
-            banki_table.drop(['rating.change', 'ind.start', 'perc.change','empty'], axis = 1, inplace = True)
-            
-            # Clean data. For the end-of-the-month indicator value,
-            # we'll convert it to a number by first removing the
-            # white spaces and replacing the comma decimal
-            # with the point decimal.
-            banki_table['ind_end'] = banki_table['ind_end'].str.replace(' ', '').str.replace(',', '.')
-            
-            # Convert to numeric.
-            banki_table['ind_end'] = pd.to_numeric(banki_table['ind_end'])
-            
-            # Remember important details about this dataset, such as
-            # the indicator and date.
-            banki_table['ind'] = pd.Series(k, index = banki_table.index)
-            banki_table['time_end'] = pd.Series(time_end, index = banki_table.index)
-            banki_table['time_end'] = pd.to_datetime(banki_table['time_end'])
-            
-            banki_final = banki_final.append(banki_table)
-            
-        # End j (months)
-    # End i (years)
-# End k (indicators)
+###############################
+## Load External Files
+###############################
 
-print "Download complete."
+execfile("../banks_analytics/dictionaries.py")
+execfile("load_banki.py")
+execfile("load_banki_revoked.py")
+execfile("merge_banki_revoked.py")
 
-# Clean environment
-del banki_table, months, years, ind_codes, end_month, end_year, i, j, k, time_end, time_start, url
+###############################
+## Parse Command-Line Arguments
+###############################
 
-#############################
-# Merge with CBR summer data
-#############################
+# Collect requests for indicator_I divided by indicator_j
+new_ratios = {}
+# Collect requests for "Is indicator within its range?"
+new_bin_ranges = []
 
-print "Preparing data..."
+# Helper list.
+select = args.select[:]
 
-# Indicators are now column-wise.
-banki_wide = pd.pivot_table(banki_final,
-    index=['time_end', 'lic_num'], columns='ind',values='ind_end')
+# If there were select-column arguments given,
+# check if there is a request for division or range calculation.
+if not args.select == None:
+    for i in args.select:
+        if not (i in ind_dict_banki_ru()['ind_name']):
+            # Check if there was passed an indicator_i/indicator_j
+            try:
+            	# If there is no "/", string.index returns ValueError.
+                string.index(i, "/")
+                # Get the operands.
+                ops = string.split(i, "/")
+                # Create new column name.
+                col_name = ops[0] + "_over_" + ops[1]
+                # Add to dictionary, {col_name : [op0, op1]}
+                new_ratios[col_name] = ops
+                # We're finished with this indicator equation.
+                select.remove(i)
+                # Add operands back as singular columns.
+                select.extend(ops)
+            except ValueError:
+                pass
+            # Check if it has ! for range operation.
+            try:
+                string.index(i, "!")
+                # Keep the column name and ignore the bang.
+                col_name = string.split(i, "!")[0]
+                # Add to list.
+                new_bin_ranges.append(col_name)
+                # Finished.
+                select.remove(i)
+            except ValueError:
+                pass 
+        
+# If no columns were specified, get all the columns.
+else:
+    args.select = ind_dict_banki_ru()['ind_name']
     
-# The pivot_table created MultiIndex-style indices, but we need the table
-# to be flat, so we can join banki with cbr.
-banki_wide.reset_index(inplace=True)
+###############################
+## Load banki.ru datasets
+###############################
 
-print "    Loading local CBR data..." 
+# If there are no update or redownload requests, and the file exists,
+# just read in the local file.
+if not (args.update_banki or args.redownload_banki or args.update_revoked
+        or args.redownload_revoked) and os.path.isfile("../csv/banki_complete.csv"):
+    # Read local csv
+    banki = pd.read_csv("../csv/banki_complete.csv", index_col=False)
+# Otherwise, perform all updates and redownloads, merge, and calculate months.
+else:
+    # Load banki indicator dataset.
+    banki = load_banki(update=args.update_banki,
+                   redownload=args.redownload_banki)
 
-# Load in the summer CBR data.
-cbr = pd.read_csv("../csv/cbr_summer.csv")
+    # Load banki license revocations dataset.
+    revoked = load_banki_revoked(update=args.update_revoked,
+                             redownload=args.redownload_revoked)
 
-# Convert columns to proper formats
-cbr['time_end'] = pd.to_datetime(cbr['time_end'])
-cbr['lic_num'] = cbr['lic_num'].astype(int)
+    # Merge the two.
+    banki = merge_banki_revoked(banki, revoked)
 
-print "    Merging..." 
 
-# Merge CBR with banki.
-cbr_banki = pd.merge(cbr, banki_wide, how="outer",
-    on=['lic_num','time_end'])
+#############################################
+## Post-Processing for Command-Line Arguments
+#############################################
 
-cbr_banki.sort_values(['lic_num','time_end'])
+# Remove duplicates from select.
+select = list(set(select))
 
-# banki's N2 and N3 are in percent format but CBR's were not.
-cbr_banki['1700'] = cbr_banki['1700'] / 100
-cbr_banki['1800'] = cbr_banki['1800'] / 100
+# Now we're ready to modify and cleanup the final dataset.
+# Here, we add our singular columns and special requests to the table.
+model_data = banki[['lic_num', 'period', 'months'] + select]
 
-print "    Copying missing values..."  
 
-# If CBR is missing any data, we'll copy it from banki.
-for row in cbr_banki.itertuples(name='row'):
+# Add new column binary classifiers to model_data.csv.
+for col in new_bin_ranges:
+	# The ratios are defined in dictionaries.py
+    r = get_ratio(col)
+
+	# Add the new column with empty values. It keeps the ! in the name.
+    model_data.insert(len(model_data.columns), col + "!", None)
     
-    # If N1 (cbr) is empty, fill it with 1600 (banki)
-    if pd.isnull(row[4]): cbr_banki = cbr_banki.set_value(row[0], 'N1', row[12])
+    # Calculate whether indicator-col is within its defined ratio.
+    model_data[col + "!"] = model_data[col].apply(lambda x: r[0] < x < r[1])
+
+# Add new column ratios and their evaluations to model_data
+for col_name, ops in new_ratios.iteritems():
+
+	# Evaluate a separate Series. Divide indicator_i by indicator_j
+    col_eval = model_data[ops[0]] / model_data[ops[1]]
     
-    # If N2 (cbr) is empty, fill it with 1700 (banki)
-    if pd.isnull(row[5]): cbr_banki = cbr_banki.set_value(row[0], 'N2', row[13])
+    # If the user specified that they wanted, for example, N2! as well as N2,
+    # then make sure we remove it from ops, so we don't remove it
+    # from model_data.
+    for col in new_bin_ranges:
+        if col in ops:
+            ops.remove(col)
     
-    # If N3 (cbr) is empty, fill it with 1800 (banki)
-    if pd.isnull(row[6]): cbr_banki = cbr_banki.set_value(row[0], 'N3', row[14])
+    # Remove operands if they weren't requested to stay.
+    model_data.drop(ops, axis=1, inplace=True)
+    # Add the new column to model_data
+    model_data = model_data.assign(new_col = col_eval)
+    # Rename the column to the actual name we defined earlier.
+    model_data.rename(columns={'new_col':col_name}, inplace=True)
 
-# Now that we've copied from banki, we can delete the banki columns.
-cbr_banki.drop(['1600','1700','1800'], axis=1, inplace=True)
+###############################
+## Write to File
+###############################      
 
-print "    Calculating months until revocations..." 
+print "Writing model data to file..."
 
-#cbr_banki = cbr_banki.assign(months = cbr_banki.time_end_y -
-#    cbr_banki.time_end_x)
-
-max_dates = cbr_banki.groupby('lic_num').agg({'time_end' : np.max}).reset_index()
-
-cbr_banki = pd.merge(cbr_banki, max_dates, how="left", on='lic_num')
-
-for row in cbr_banki.itertuples(name='row'):
-    cbr_banki = cbr_banki.set_value(row[0], 'months',
-        12 * (row[-1].year - row[1].year) +
-        (row[-1].month - row[1].month))
-
-print "    Writing to file."
-
-cbr_banki.to_csv("../csv/model_data_py.csv")
-
-print "Process complete." 
+model_data.to_csv("../csv/model_data.csv", index=False)
