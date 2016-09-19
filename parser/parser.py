@@ -93,7 +93,6 @@ if not args.select == None:
                         	raise SystemExit(0)
                         new_bin_ranges.append(col_name)
                         select.remove(i)
-                        
                     except ValueError:
                         pass 
         
@@ -131,12 +130,13 @@ else:
 
 # Remove duplicates from select.
 
-
 select = list(set(select))
+columns = select + new_bin_ranges
+columns = list(set(columns))
 
 # Now we're ready to modify and cleanup the final dataset.
 # Here, we add our singular columns and special requests to the table.
-model_data = banki[['lic_num', 'period', 'months'] + select]
+model_data = banki[['lic_num', 'period', 'months'] + columns]
 
 # Add new column binary classifiers to model_data.csv.
 for col in new_bin_ranges:
@@ -146,8 +146,12 @@ for col in new_bin_ranges:
 	# Add the new column with empty values. It keeps the ! in the name.
     model_data.insert(len(model_data.columns), col + "!", None)
     
+    def in_range(x, lb, ub):
+    	if pd.notnull(x):
+    		return lb <= x <= ub
+    
     # Calculate whether indicator-col is within its defined ratio.
-    model_data[col + "!"] = model_data[col].apply(lambda x: r[0] <= x <= r[1])
+    model_data[col + "!"] = model_data[col].apply(lambda x: r[0] <= x <= r[1] if pd.notnull(x) else None)
     
     if not col in select:
     	model_data.drop(col, axis=1, inplace=True)
