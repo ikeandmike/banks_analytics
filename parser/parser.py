@@ -88,7 +88,7 @@ if not args.select == None:
         
 # If no columns were specified, get all the columns.
 else:
-    args.select = ind_dict_banki_ru()['ind_name']
+    select = ind_dict_banki_ru()['ind_name']
     
 ###############################
 ## Load banki.ru datasets
