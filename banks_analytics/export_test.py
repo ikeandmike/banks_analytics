@@ -73,4 +73,14 @@ def export_test(r):
 	export_data_sets(r)
 	export_results(r)
 
+def export_c_test(r):
+	c_path = path + "c_test.txt"
+	with open(c_path, "a") as myfile:
+		print("C: %f" % r.C)
+		myfile.write("C: %f\n" % r.C)
+		myfile.write("Precision:\n%s\n\n" % str(r.precision))
+		myfile.write("Recall:\n%s\n\n" % str(r.recall))
+		myfile.write("F1:\n%s\n\n" % str(r.f1))
+		myfile.close()
+
 ################################################################################

@@ -127,18 +127,12 @@ precision = precision_score(Y_test, predict_arr, average=None)	# Calculate the p
 recall    = recall_score(Y_test, predict_arr, average=None)	# Calculate the recall
 f1        = f1_score(Y_test, predict_arr, average=None)		# Calculate f1
 
+results.addResults(c_val, model.coef_, predict_arr, prob_arr, precision, recall, f1) # Add results to "results" object
+
 # If C value passed in, add results to file (used in script for testing several values of C)
 if len(sys.argv) > 1:
-	with open("../out/c_results.txt", "a") as myfile:
-		print("C: %f" % float(sys.argv[1]))
-		myfile.write("C: %f\n" % float(sys.argv[1]))
-		myfile.write("Precision:\n%s\n\n" % str(precision))
-		myfile.write("Recall:\n%s\n\n" % str(recall))
-		myfile.write("F1:\n%s\n\n" % str(f1))
-		myfile.close()
-	exit() # Quit early so results aren't printed
-
-results.addResults(c_val, model.coef_, predict_arr, prob_arr, precision, recall, f1) # Add results to "results" objects
+	export_c_test(results)
+	exit() # Quit early so full results aren't exported
 
 print("\nC: %s\n" % c_val)
 print("Precision: %s\n" % precision)
