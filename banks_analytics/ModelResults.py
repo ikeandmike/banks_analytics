@@ -5,36 +5,35 @@ class ModelResults:
 
 ############################### CLASS FUNCTIONS ################################
 
-	def __init__(self, X_train, X_test, Y_train, Y_test):
+	def __init__(self, X_train, X_test, Y_train, Y_test, feature_labels):
 		# Round values in X array before storing		
 		self.round_2d_arr(X_train, 3)
 		self.round_2d_arr(X_test, 3)
 		
-		self.X_train = str(X_train)
-		self.X_test  = str(X_test)
-		self.Y_train = str(Y_train)
-		self.Y_test  = str(Y_test)
+		self.X_train = X_train
+		self.X_test  = X_test
+		self.Y_train = Y_train
+		self.Y_test  = Y_test
+		self.feature_labels = feature_labels
 
 		self.coef = np.array([])
-
 		self.predict_arr = np.array([])
 		self.prob_arr    = np.array([])
-		self.per_corr    = 0.0
-		self.precision    = ""
-		self.recall      = ""
-		self.f1          = ""
+		self.precision   = np.array([])
+		self.recall      = np.array([])
+		self.f1          = np.array([])
 
-	def addResults(self, coef, predict_arr, prob_arr, per_corr, precision, recall, f1):
+	def addResults(self, C, coef, predict_arr, prob_arr, precision, recall, f1):
 		# Round values in prob_arr before storing		
-		self.round_2d_arr(prob_arr, 3)
+		#self.round_2d_arr(prob_arr, 3)
 
-		self.coef	 = str(coef)
-		self.predict_arr = str(predict_arr)
-		self.prob_arr    = str(prob_arr)
-		self.per_corr    = self.n_sig_figs(per_corr, 3)
-		self.precsion    = str(precision)
-		self.recall      = str(recall)
-		self.f1          = str(f1)
+		self.C		 = C
+		self.coef	 = coef
+		self.predict_arr = predict_arr
+		self.prob_arr    = prob_arr
+		self.precsion    = precision
+		self.recall      = recall
+		self.f1          = f1
 
 ############################### HELPER FUNCTIONS ###############################
 

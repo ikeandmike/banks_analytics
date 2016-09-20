@@ -2,96 +2,75 @@
 
 import os
 import datetime
+import numpy as np
 
 from ModelResults import ModelResults # Class I made for storing details (used for exporting to txt file, for creating graphs etc.)
 
- ############################### HELPER FUNCTIONS ###############################
+date = str(datetime.date.today())
+time = str(datetime.datetime.now().time())[:8]
 
-def draw_line():
-	return "--------------------------------------------------------------------------------\n\n"
+############################# CREATE PATH VARIABLE #############################
 
-def make_header(f, date, time):
-	f.write("WPI/Deloitte Regression Model for Predicting License Revocation of Russian Banks\n")
-	f.write("Test Performed: %s %s\n\n" % (date, time))
-	f.write(draw_line())
+path = "../out/%s/%s/" % (date, time)
+if not os.path.exists(path): # Create folders if they don't exist
+	os.makedirs(path)
+
+############################### HELPER FUNCTIONS ###############################
+
+# Saves arr to filename.csv
+def output_arr(arr, filename):
+	var_path = path + filename		# Create full path to file
+	np.savetxt(var_path, arr, delimiter=',')# Save array as csv
+
+# Adds header before exporting to csv
+def output_arr_w_header(arr, filename, header):	
+	# Create header string	
+	head_str = str(header[0])
+	for i in range(1, header.size):
+		head_str = head_str + "," + str(header[i])
+	head_str = head_str + "\n"
+
+	# Output file with header
+	var_path = path + filename
+	with file(var_path, 'w') as outfile:
+		outfile.write(head_str)
+		np.savetxt(outfile, arr, delimiter=',')
+		outfile.close()
 
 ################################ FILE WRITERS ##################################
 
-# Generates an extended report (data + results)
-def long_rep(f, r, date, time):
-	make_header(f, date, time)
+# Creates four files, one for each data set (X_train, X_test, Y_train, Y_test)
+# Also export value of C
+def export_data_sets(r):
 
-	f.write("Training Data:\n")
-	f.write("X_train=\n")	
-	f.write(r.X_train)
-	f.write("\nY_train=\n")
-	f.write(r.Y_train)
-	f.write("\n\n")
-	
-	f.write("Testing Data:\n")
-	f.write("X_test=\n")
-	f.write(r.X_test)
-	f.write("\nY_test=\n")
-	f.write(r.Y_test)
-	f.write("\n\n")
-	f.write(draw_line())
-	
-	f.write("Results:\n\n")
-	f.write("Coefficient Matrix:\n%s\n" % r.coef)
-	f.write("Prediction Array (Predictions of Y_test):\n")
-	f.write(r.predict_arr)
-	f.write("\nProbability Vectors:\n")
-	f.write(r.prob_arr)
-	f.write("\n\n")
-	f.write("Percentage of Total Predictions Correct: %s\n" % r.per_corr)
-	f.write("Precision:\n")
-	f.write(r.precision)
-	f.write("\nRecall:\n")
-	f.write(r.recall)
-	f.write("\nF1:\n")
-	f.write(r.f1)
-	f.write("\n")
-	f.write(draw_line())
+	output_arr_w_header(r.X_train, "X_train.csv", r.feature_labels)
+	output_arr_w_header(r.X_test, "X_test.csv", r.feature_labels)
+	output_arr(r.Y_train, "Y_train.csv")
+	output_arr(r.Y_test, "Y_test.csv")
 
-	f.close()
+	c_path = path + "c.txt"
+	with file(c_path, 'w') as outfile:
+		outfile.write(str(r.C))
+		outfile.close()
 
-# Generates a summary (just results)
-def short_rep(f, r, date, time):
-	make_header(f, date, time)	
-	
-	f.write("Results:\n\n")
-	f.write("Coefficient Matrix:\n%s\n" % r.coef)
-	f.write("Percentage of Total Predictions Correct: %s\n" % r.per_corr)
-	f.write("Precision:\n")
-	f.write(r.precision)
-	f.write("\nRecall:\n")
-	f.write(r.recall)
-	f.write("\nF1:\n")
-	f.write(r.f1)
-	f.write("\n")
-	f.write(draw_line())
+# Creates files for all results
+def export_results(r):
+	output_arr_w_header(r.coef, "coef.csv", r.feature_labels)
+	output_arr(r.predict_arr, "predict_array.csv")
 
-	f.close()
+	# Create header with target values for some results files	
+	header = np.arange(1,25)
+	header = np.append(header, [1000, 9000])
+
+	output_arr_w_header(r.prob_arr, "probability_vectors.csv", header)
+	output_arr(r.precision, "precision.csv")
+	output_arr(r.recall, "recall.csv")
+	output_arr(r.f1, "f1.csv")
 
 # Writes run reports to txt files, returns paths to files
+# r = a ModelResults object
 def export_test(r):
-	# Get the current date/time
-	date = str(datetime.date.today())
-	time = str(datetime.datetime.now().time())[:8]
+	export_data_sets(r)
+	export_results(r)
 
-	# Create folder "../out/<date>/", if it doesn't exist already
-	path = "../out/%s/" % date
-	if not os.path.exists(path):
-    		os.makedirs(path)
-
-	# Create file pointers
-	write_file1 = "%s%s_extended.txt" % (path, time)
-	f = open(write_file1, 'w')
-	write_file2 = "%s%s_brief.txt" % (path, time)
-	g = open(write_file2, 'w')
-
-	# Generate reports
-	long_rep(f, r, date, time)
-	short_rep(g, r, date, time)
-
-	return write_file1, write_file2
+################################################################################

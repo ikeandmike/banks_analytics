@@ -17,7 +17,7 @@ from sklearn.cross_validation import train_test_split
 
 from ModelResults import ModelResults	# Class I made for storing details (used for exporting to txt file, for creating graphs etc.)
 					# It handles rounding/casting; just pass variables used as is
-from export_test import export_test	# A file I wrote to export results to a txt file
+from export_test import *		# A file I wrote to export results to a txt file
 
 # WARNING: Normally, large numpy arrays are truncated (ie. [ 1, 2, ... , 9999, 10000 ] )
 #          This option turns this feature off, so that the entire array can be printed
@@ -31,7 +31,7 @@ print("WPI/Deloitte Regression Model for Predicting License Revocation of Russia
 
 # Run parser to generate custom model_data.csv file
 print("Generating datafile...")
-subprocess.call(["../parser/parser.py", "-s", "N1!", "N2!"], cwd="../parser") # Add additional options as addtional strings within array
+subprocess.call(["../parser/parser.py", "-s", "N1!", "N2!", "N3!", "return_on_net_assets", "return_on_equity", "return_on_net_assets!", "return_on_equity!"], cwd="../parser") # Add additional options as addtional strings within array
 
 print("Importing data...")
 with open('../csv/model_data.csv', 'rb') as csvfile:
@@ -105,26 +105,24 @@ with open('../csv/model_data.csv', 'rb') as csvfile:
 		i += 1
 
 X = np.delete(X, 0, 0) # Remove the dummy row
+feature_labels = np.array(feature_labels) # Convert feature_labels to a numpy ndarray
 
 print("\nFitting model...")
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.33, stratify=Y)	# Split data into testing & training, with 66% training, 33% testing
-results = ModelResults(X_train, X_test, Y_train, Y_test)				# Store values in ModelResults object
+results = ModelResults(X_train, X_test, Y_train, Y_test, feature_labels)		# Store values in ModelResults object
 
-with open("t.txt", "w") as myfile:
-	myfile.write(str(X))
-	myfile.close()
+# If passed, use passed in C value
+if len(sys.argv) > 1: c_val = float(sys.argv[1])
+else:		      c_val = 0.01
 
 # Create the model & fit to training data
-# If passed, use passed in C value
-if len(sys.argv) > 1:	model = linear_model.LogisticRegression(penalty='l1', C=float(sys.argv[1]), multi_class='ovr').fit(X_train, Y_train)
-else:			model = linear_model.LogisticRegression(penalty='l1', C=0.01, multi_class='ovr').fit(X_train, Y_train)
+model = linear_model.LogisticRegression(penalty='l1', C=c_val, multi_class='ovr').fit(X_train, Y_train)
 
 print("Generating predictions...")
-predict_arr = model.predict(X_test)	    # Run a prediction for test dataset (ie. compare this array to Y_test)
+predict_arr = model.predict(X_test)	  # Run a prediction for test dataset (ie. compare this array to Y_test)
 prob_arr    = model.predict_proba(X_test) # Runs prediction, outputs probability vectors
 
 print("Evaluating performance...")
-per_corr  = model.score(X_test, Y_test)				# Calculate the percentage correct on test set
 precision = precision_score(Y_test, predict_arr, average=None)	# Calculate the precision
 recall    = recall_score(Y_test, predict_arr, average=None)	# Calculate the recall
 f1        = f1_score(Y_test, predict_arr, average=None)		# Calculate f1
@@ -140,17 +138,15 @@ if len(sys.argv) > 1:
 		myfile.close()
 	exit() # Quit early so results aren't printed
 
-results.addResults(model.coef_, predict_arr, prob_arr, per_corr, precision, recall, f1) # Add results to "results" objects
+results.addResults(c_val, model.coef_, predict_arr, prob_arr, precision, recall, f1) # Add results to "results" objects
 
-print("\nCoefficient Matrix: \n%s\n" % model.coef_)
-print("Percent Correct: %s\n" % per_corr)
+print("\nC: %s\n" % c_val)
 print("Precision: %s\n" % precision)
 print("Recall: %s\n" % recall)
-print("f1: %s" % f1)
+print("f1: %s\n" % f1)
 
-print("\nExporting results...")
-extended, short = export_test(results)
-print("Detailed report (data + results) written to %s" % extended)
-print("Brief report (results only) written to %s\n" % short)
+print("Exporting results...")
+export_test(results)
+print("Data sets and results exported to %s" % path)
 
 ################################################################################
