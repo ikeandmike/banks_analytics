@@ -79,6 +79,13 @@ def export_test(r):
 # Generally don't want to use this manually
 def export_c_test(r, filePath):
 	with open(filePath, "a") as myfile:
+		# Print header with list of features (will print each iteration, not worth trying to fix)
+		head_str = "Used features: " + str(r.feature_labels[0])
+		for i in range(1, r.feature_labels.size):
+			head_str += ", " + str(r.feature_labels[i])
+		head_str += "\n\n"
+		myfile.write(head_str)
+
 		print("C: %f" % r.C)
 		myfile.write("C: %f\n" % r.C)
 		myfile.write("Precision:\n%s\n\n" % str(r.precision))

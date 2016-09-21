@@ -23,7 +23,7 @@ if not os.path.exists(path):
 	os.makedirs(path)
 
 with open(fileName, "w") as myfile:
-	myfile.write("Results of C-value testing\n\n")
+	myfile.write("Results of C-value testing\n")
 	myfile.close()
 
 # Iterate over test values for C, run model on same seed to get comparative results
