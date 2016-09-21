@@ -43,7 +43,7 @@ with open('../csv/model_data.csv', 'rb') as csvfile:
 		if firstRow == False:
 			
 			target = float(row[2])	# Get target value from file
-			if target >= 0:		# Ignore negative targets (ie. values from after revocation)
+			if target > 0:		# Ignore negative targets (ie. values from after revocation)
 				
 				# Generate array of new features
 				new_feat = []
@@ -69,8 +69,6 @@ with open('../csv/model_data.csv', 'rb') as csvfile:
 
 						new_feat.append(float(1)) # 1 = Value present
 			
-				if target < 1000: target += 1	# Months values start at 0 in file
-
 				X = np.concatenate(( X, np.array([new_feat]) )) # Add new feature set to array
 				Y = np.append(Y, target)			# Add new target to array
 
@@ -127,6 +125,7 @@ precision = precision_score(Y_test, predict_arr, average=None)	# Calculate the p
 recall    = recall_score(Y_test, predict_arr, average=None)	# Calculate the recall
 f1        = f1_score(Y_test, predict_arr, average=None)		# Calculate f1
 
+print(type(precision))
 results.addResults(c_val, model.coef_, predict_arr, prob_arr, precision, recall, f1) # Add results to "results" object
 
 # If C value passed in, add results to file (used in script for testing several values of C)

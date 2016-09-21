@@ -29,11 +29,11 @@ class ModelResults:
 
 		self.C		 = C
 		self.coef	 = coef
-		self.predict_arr = predict_arr
-		self.prob_arr    = prob_arr
-		self.precsion    = precision
-		self.recall      = recall
-		self.f1          = f1
+		self.predict_arr = np.array(predict_arr)
+		self.prob_arr    = np.array(prob_arr)
+		self.precision = np.array(precision)
+		self.recall    = np.array(recall)
+		self.f1        = np.array(f1)
 
 ############################### HELPER FUNCTIONS ###############################
 
