@@ -4,7 +4,7 @@ import datetime as dt
 import sys
 import os
 
-execfile("../banks_analytics/dictionaries.py")
+execfile("./dictionaries.py")
 
 ###############################
 ## Prepare download process
