@@ -8,11 +8,16 @@ vals = np.array([ 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.75, 0.9, 0.95, 1.0 ])
 
 # Create header of results file
 fileName = path + "c_test.txt"
+
+# Create folders if they don't exist
+if not os.path.exists(path):
+	os.makedirs(path)
+
 with open(fileName, "w") as myfile:
 	myfile.write("Results of C-value testing\n\n")
 	myfile.close()
 
-# Iterate over test values for C, run script
+# Iterate over test values for C, run model on same seed to get comparative results
 for C in vals:
-	subprocess.call(["./multinomial_logistic_regression.py", str(C)])
+	subprocess.call(["./multinomial_logistic_regression.py", "-ct", fileName, "-c", str(C), "-s", "42"])
 print("\nResults stored in %s" % fileName)

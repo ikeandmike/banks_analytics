@@ -9,6 +9,7 @@
 
 import csv
 import sys
+import argparse
 import subprocess
 import numpy as np
 from sklearn import linear_model
@@ -28,6 +29,19 @@ np.set_printoptions(precision=3) # This one is a lot less scary, just sets numbe
 ################################## MODEL CODE ##################################
 
 print("WPI/Deloitte Regression Model for Predicting License Revocation of Russian Banks\n")
+
+parser = argparse.ArgumentParser()
+
+c_test = parser.add_mutually_exclusive_group()
+c_test.add_argument("-ct", "--c_test", help="Used by c_test.py to output several runs to one file; give this option the path to the file where all results should be stored")
+
+c_par = parser.add_mutually_exclusive_group()
+c_par.add_argument("-c", "--pass_c", help="Pass in value for C for model to use.")
+
+seed_par = parser.add_mutually_exclusive_group()
+seed_par.add_argument("-s", "--seed", help="Pass seed for train_test_split.")
+
+args = parser.parse_args()
 
 # Run parser to generate custom model_data.csv file
 print("Generating datafile...")
@@ -106,12 +120,20 @@ X = np.delete(X, 0, 0) # Remove the dummy row
 feature_labels = np.array(feature_labels) # Convert feature_labels to a numpy ndarray
 
 print("\nFitting model...")
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.33, stratify=Y)	# Split data into testing & training, with 66% training, 33% testing
-results = ModelResults(X_train, X_test, Y_train, Y_test, feature_labels)		# Store values in ModelResults object
+
+# Split data into testing & training, with 66% training, 33% testing
+# If seed passed, use it
+if args.seed != None:
+	X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.33, random_state=int(args.seed), stratify=Y)
+else:
+	X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.33, stratify=Y)
+
+# Store results in ModelResults object
+results = ModelResults(X_train, X_test, Y_train, Y_test, feature_labels)
 
 # If passed, use passed in C value
-if len(sys.argv) > 1: c_val = float(sys.argv[1])
-else:		      c_val = 0.01
+if args.pass_c != None: c_val = float(args.pass_c)
+else:		      	c_val = 0.01
 
 # Create the model & fit to training data
 model = linear_model.LogisticRegression(penalty='l1', C=c_val, multi_class='ovr').fit(X_train, Y_train)
@@ -125,12 +147,11 @@ precision = precision_score(Y_test, predict_arr, average=None)	# Calculate the p
 recall    = recall_score(Y_test, predict_arr, average=None)	# Calculate the recall
 f1        = f1_score(Y_test, predict_arr, average=None)		# Calculate f1
 
-print(type(precision))
 results.addResults(c_val, model.coef_, predict_arr, prob_arr, precision, recall, f1) # Add results to "results" object
 
 # If C value passed in, add results to file (used in script for testing several values of C)
-if len(sys.argv) > 1:
-	export_c_test(results)
+if args.c_test != None:
+	export_c_test(results, args.c_test)
 	exit() # Quit early so full results aren't exported
 
 print("\nC: %s\n" % c_val)

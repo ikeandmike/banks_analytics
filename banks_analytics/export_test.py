@@ -12,8 +12,6 @@ time = str(datetime.datetime.now().time())[:8]
 ############################# CREATE PATH VARIABLE #############################
 
 path = "../out/%s/%s/" % (date, time)
-if not os.path.exists(path): # Create folders if they don't exist
-	os.makedirs(path)
 
 ############################### HELPER FUNCTIONS ###############################
 
@@ -70,12 +68,17 @@ def export_results(r):
 # Writes run reports to txt files, returns paths to files
 # r = a ModelResults object
 def export_test(r):
+	# Create folders if they don't exist
+	if not os.path.exists(path):
+		os.makedirs(path)
+
 	export_data_sets(r)
 	export_results(r)
 
-def export_c_test(r):
-	c_path = path + "c_test.txt"
-	with open(c_path, "a") as myfile:
+# Used by c_test.py to compare several C values on the same model
+# Generally don't want to use this manually
+def export_c_test(r, filePath):
+	with open(filePath, "a") as myfile:
 		print("C: %f" % r.C)
 		myfile.write("C: %f\n" % r.C)
 		myfile.write("Precision:\n%s\n\n" % str(r.precision))
