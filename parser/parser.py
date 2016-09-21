@@ -57,23 +57,17 @@ new_bin_ranges = []
 
 # If there were select-column arguments given,
 # check if there is a request for division or range calculation.
-if not args.select == None and not args.cbr:
+if not args.select == None:
         # Helper list
         select = args.select[:]
         for i in args.select:
-                if not (i in ind_dict_banki_ru()['ind_name']):
+                if not (i in ind_dict_banki_ru()['ind_name'] or i in cbr_standards()):
                     # Check if there was passed an indicator_i/indicator_j
                     try:
                         # If there is no "/", string.index returns ValueError.
                         string.index(i, "/")
                         # Get the operands.
                         ops = string.split(i, "/")
-                        
-                        for ind in ops:
-                        	if not ind in ind_dict_banki_ru()['ind_name']:
-                        		print "No indicator named",ind
-                        		print "Exiting..."
-                        		raise SystemExit(0)
                         
                         # Create new column name.
                         col_name = ops[0] + "_over_" + ops[1]
@@ -101,8 +95,8 @@ if not args.select == None and not args.cbr:
                         pass 
         
 # If no columns were specified, get all the columns.
-elif args.cbr:
-        select = args.select[:]
+elif args.select == None and args.cbr:
+        select = cbr_standards()
 else:
     select = ind_dict_banki_ru()['ind_name']
     
