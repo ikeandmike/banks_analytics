@@ -30,22 +30,23 @@ np.set_printoptions(precision=3) # This one is a lot less scary, just sets numbe
 
 print("WPI/Deloitte Regression Model for Predicting License Revocation of Russian Banks\n")
 
+# Argument Parsing
 parser = argparse.ArgumentParser()
-
 c_test = parser.add_mutually_exclusive_group()
 c_test.add_argument("-ct", "--c_test", help="Used by c_test.py to output several runs to one file; give this option the path to the file where all results should be stored")
-
 c_par = parser.add_mutually_exclusive_group()
 c_par.add_argument("-c", "--pass_c", help="Pass in value for C for model to use.")
-
 seed_par = parser.add_mutually_exclusive_group()
 seed_par.add_argument("-s", "--seed", help="Pass seed for train_test_split.")
-
 args = parser.parse_args()
+
+call_parse = ["../parser/parser.py", "-s"]
+features = ["return_on_net_assets", "return_on_equity"] # NOTE: Change *this* array to add features to model
+call_parse += features
 
 # Run parser to generate custom model_data.csv file
 print("Generating datafile...")
-subprocess.call(["../parser/parser.py", "-s", "N1!", "N2!", "N3!", "return_on_net_assets", "return_on_equity", "return_on_net_assets!", "return_on_equity!"], cwd="../parser") # Add additional options as addtional strings within array
+subprocess.call(call_parse, cwd="../parser") # cwd = Current Working Directory
 
 print("Importing data...")
 with open('../csv/model_data.csv', 'rb') as csvfile:
