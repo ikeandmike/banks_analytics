@@ -133,3 +133,6 @@ def get_ratio(inds):
 
     return result
     
+# CBR Standards
+def cbr_standards():
+    return ['N1', 'N1_0','N1_1','N1_2','N1_3','N10_1','N12','N15','N15_1','N16', 'N16_1','N16_2','N17','N18','N19','N2','N3','N4','N7','N9_1','T1','T2']
