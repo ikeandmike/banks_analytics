@@ -148,8 +148,6 @@ select = list(set(select))
 columns = select + new_bin_ranges
 columns = list(set(columns))
 
-print columns
-
 # Now we're ready to modify and cleanup the final dataset.
 # Here, we add our singular columns and special requests to the table.
 
