@@ -1,10 +1,5 @@
 #!/usr/bin/python
 
-# TO RUN
-# python multinomial_logistic_regression.py [ C ]
-# Optional C parameter is for testing effectiveness of change in C
-# Program runs until performance metrics are calculated, then the values are outputted and the program quits
-
 ################################### PREAMBLE ###################################
 
 import csv
@@ -83,7 +78,7 @@ with open('../csv/model_data.csv', 'rb') as csvfile:
 							new_feat.append(float(curr_feat)) # Use value of feature
 
 						new_feat.append(float(1)) # 1 = Value present
-			
+
 				X = np.concatenate(( X, np.array([new_feat]) )) # Add new feature set to array
 				Y = np.append(Y, target)			# Add new target to array
 
@@ -91,24 +86,14 @@ with open('../csv/model_data.csv', 'rb') as csvfile:
 			firstRow = False
 			numFeatures = len(row)-3 # Everything past first three columns are features
 
-			# Notes on Dummy Row:
-			# Above, I use np.concatenate to generate the feature (X) set
-			# concatenate is very particular; it requires that the two arrays
-			# have the same dimension *and* the type of corresponding entries
-			# in the two arrays are the same. The dummy row satisfies this
-			# requirement; it is removed later
-
-			# Create array of feature labels and dummy row
+			# Create array of feature labels
 			feature_labels = []
-			dummy = []
 			for j in range(3, numFeatures+3):
 				feature_labels.append(row[j])		# Add feature name
 				feature_labels.append("%s_M?" % row[j])	# For missing column
-				dummy.append(j)				# Create dummy row for creating X
-				dummy.append(j)
 
 			# Create the feature and target datasets respectively
-			X = np.array([dummy])
+			X = np.empty((0,numFeatures*2), float) # np.empty creates an empty array with shape attributes (so it can be used in concatenate)
 			Y = np.array([])
 
 		# Print dots to indicate progress		
@@ -117,7 +102,6 @@ with open('../csv/model_data.csv', 'rb') as csvfile:
 			sys.stdout.flush()
 		i += 1
 
-X = np.delete(X, 0, 0) # Remove the dummy row
 feature_labels = np.array(feature_labels) # Convert feature_labels to a numpy ndarray
 
 print("\nFitting model...")
