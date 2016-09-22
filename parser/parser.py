@@ -170,10 +170,11 @@ for col in new_bin_ranges:
     	model_data.drop(col, axis=1, inplace=True)
     
 
+seen = new_ratios.values()
 # Add new column ratios and their evaluations to model_data
 for col_name, ops in new_ratios.iteritems():
-
 	# Evaluate a separate Series. Divide indicator_i by indicator_j
+    
     col_eval = model_data[ops[0]] / model_data[ops[1]]
     
     # If the user specified that they wanted, for example, N2! as well as N2,
@@ -181,8 +182,16 @@ for col_name, ops in new_ratios.iteritems():
     # from model_data.
     for col in new_bin_ranges:
         if col in ops:
+        	ops.remove(col)
+	
+
+    seen.remove(ops)
+	
+    for col in ops:
+        # Flattens list [..]
+    	if col in [item for sublist in seen for item in sublist]:
             ops.remove(col)
-    
+		
     # Remove operands if they weren't requested to stay.
     model_data.drop(ops, axis=1, inplace=True)
     # Add the new column to model_data
