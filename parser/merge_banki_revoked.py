@@ -36,10 +36,13 @@ def merge_banki_revoked (banki, revoked):
 
     print "Writing merged set with months to file..."
 
-    merged.to_csv("../csv/banki_complete.csv", index=False)
+    #merged.to_csv("../csv/banki_complete.csv", index=False)
 
     print "Returning..."
 
     return merged    
 
+def merge_cbr_banki(cbr, banki):
+
     
+    merged = banki.merge(cbr, how='left', on='lic_num')
