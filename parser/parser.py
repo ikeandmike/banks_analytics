@@ -12,199 +12,226 @@ pd.options.mode.chained_assignment = None
 ## Set Command Line Options
 ###############################
 
+# Initialize Argument Parser object.
 parser = argparse.ArgumentParser()
 
-# banki indicator dataset argument group
-group_banki = parser.add_mutually_exclusive_group()
-group_banki.add_argument("-ub", "--update-banki", action="store_true",
-                   help="Update banki.ru indicator dataset.")
-group_banki.add_argument("-rb", "--redownload-banki", action="store_true",
-                   help="Redownload banki.ru indicator dataset.")
+# Banki indicator dataset argument group.
+# One can only update or redownload, but not both.
+group = parser.add_mutually_exclusive_group()
 
-# banki revoked dataset argument group
-group_revoked = parser.add_mutually_exclusive_group()
-group_revoked.add_argument("-ur", "--update-revoked", action="store_true",
-                           help="Update banki.ru revocation dataset.")
-group_revoked.add_argument("-rr", "--redownload-revoked", action="store_true",
-                           help="Redownload banki.ru revocation dataset.")
+group.add_argument(
+	"-u",
+	"--update",
+	action="store_true",
+	help="Update banki.ru indicator and revocation datasets."
+	)
+group.add_argument(
+	"-r",
+	"--redownload",
+	action="store_true",
+	help="Redownload banki.ru indicator and revocation dataset."
+	)
 
 # User can pass column names to the script
-parser.add_argument("-s", "--select", metavar="COLUMNS", nargs='*',
-                    help="Select columns from indicator dataset to use in model. To receive binary indicators (ie. is indicator in acceptable range) add a bang after the indicator (ie. 'N1!'). To receive ratios of indicators, specify with a slash (ie. 'N1/N2').")
-
-parser.add_argument("-cbr", action="store_true",
-                    help="Use CBR indicator dataset instead of banki.ru")
+parser.add_argument(
+    "-s",
+    "--select",
+    metavar="COLUMNS",
+    nargs='*',
+    help="Select columns from indicator dataset to use in model. \
+    To receive binary indicators (ie. is indicator in acceptable range) \
+    add a bang after the indicator (ie. 'N1!'). To calculate values between \
+    indicators, use Lisp notation: (/ (+ net_assets net_profit) loans)"
+    )
 
 args = parser.parse_args()
 
-###############################
-## Load External Files
-###############################
+##################################
+## Load Local Scripts, File Paths,
+## and Variables
+##################################
 
 execfile("dictionaries.py")
 execfile("load_banki.py")
 execfile("load_banki_revoked.py")
 execfile("merge_banki_revoked.py")
 
-###############################
-## Parse Command-Line Arguments
-###############################
+# Local datasets:
+banki          = "../csv/banki.csv"           # Banki indicators, no months.
+banki_revoked  = "../csv/banki_revoked.csv"   # Banki revocation dates.
+banki_complete = "../csv/banki_complete.csv"  # Banki inds. and months.
 
-# Collect requests for indicator_I divided by indicator_j
-new_ratios = {}
-# Collect requests for "Is indicator within its range?"
-new_bin_ranges = []
+banki_ind_names = ind_dict_banki_ru()['ind_name'] # Banki indicator names
 
-# If there were select-column arguments given,
-# check if there is a request for division or range calculation.
-if not args.select == None:
-        # Helper list
-        select = args.select[:]
-        for i in args.select:
-                if not (i in ind_dict_banki_ru()['ind_name'] or i in cbr_standards()):
-                    # Check if there was passed an indicator_i/indicator_j
-                    try:
-                        # If there is no "/", string.index returns ValueError.
-                        string.index(i, "/")
-                        # Get the operands.
-                        ops = string.split(i, "/")
-                        
-                        # Create new column name.
-                        col_name = ops[0] + "_over_" + ops[1]
-                        # Add to dictionary, {col_name : [op0, op1]}
-                        new_ratios[col_name] = ops
-                        # We're finished with this indicator equation.
-                        select.remove(i)
-                        # Add operands back as singular columns.
-                        select.extend(ops)
-                    except ValueError:
-                        pass
-                    # Check if it has ! for range operation.
-                    try:
-                        string.index(i, "!")
-                        # Keep the column name and ignore the bang.
-                        col_name = string.split(i, "!")[0]
-                        r = get_ratio(col_name)
-                        if r == None:
-                        	print "No ratio for", col_name
-                        	print "Exiting..."
-                        	raise SystemExit(0)
-                        new_bin_ranges.append(col_name)
-                        select.remove(i)
-                    except ValueError:
-                        pass 
-        
-# If no columns were specified, get all the columns.
-elif args.select == None and args.cbr:
-        select = cbr_standards()
-else:
-    select = ind_dict_banki_ru()['ind_name']
+##################################
+
+##################################
+## Function Definitions
+##################################
+
+def parse_select(orig_select):
+
+    select = orig_select[:] # Make a copy of the original selection.
     
-###############################
-## Load banki.ru datasets
-###############################
-
-# If there are no update or redownload requests, and the file exists,
-# just read in the local file.
-
-if args.cbr:
-        if os.path.isfile("../csv/cbr_standards_complete.csv"):
-                cbr = pd.read_csv("../csv/cbr_standards_complete.csv", index_col=False)
+    singular_cols = []   # When parsing the command line, keep these columns.
+    range_cols    = []   # Columns are true/false if the Indicator is in range.
+    equation_cols = []   # These are equations between columsn
+    
+    # Iterate throughe each item asked for selection from the command-line.
+    for i in select:
+        # If i is immediately found in the list of indicators,
+        # then is a singularly requested column.
+        if i in banki_ind_names:
+            singular_cols.append(i)
+        # Now, look for operators like ! and /
         else:
-                print "Local CBR file not found. Exiting..."
-                SystemExit(0)
+            # if string.index doesn't find "!", it returns an Exception.
+            try:
+                string.index(i, '!')
+                ind_name = string.split(i, '!')[0]
+                range_cols.append(ind_name)
+            except ValueError:
+                equation_cols.append(i)
+                
+        
+    return [singular_cols, range_cols, equation_cols]
+# End parse_select(..)
 
-if not (args.update_banki or args.redownload_banki or args.update_revoked
-        or args.redownload_revoked) and os.path.isfile("../csv/banki_complete.csv"):
-    # Read local csv
+# Puts all the helper functions together to add string equations passed
+# from the command line to the model_data DataFrame.
+# param df The DataFrame to which to add the results of the equations.
+# param eq_list The string equations passed from the command line.
+def add_eqs(df, eq_list):
+
+    # Use banki_complete which has all the indicators.
     banki = pd.read_csv("../csv/banki_complete.csv", index_col=False)
-# Otherwise, perform all updates and redownloads, merge, and calculate months.
+
+    # For each equation passed from the command line...
+    for eq in eq_list:
+        # Get the recursive form of the equation.
+        recursive_eq_str = eq_helper(eq)
+        # Evaluate the column.
+        col = df_eval_equations(banki, recursive_eq_str)
+        # Create a syntatically appropriate column name.
+        eq_str_col_name = eq.replace(' ','_')
+        # Add it to the DataFrame
+        df.insert(len(df.columns), eq_str_col_name, col)
+
+    return df
+
+# Parses equation string into recursive list for df_eavl_equations.
+# Example:
+#   in: '(/ (+ net_assets net_profit) loans)'
+#  out: ['(+ net_assets net_profit)', '(/ (+ net_assets net_profit) loans)']
+def eq_helper(eq):
+    
+    parens = [] # Keeps list of index location of opening parentheses.
+    parts  = [] # Collects parts of equation string.
+    
+    # Iterate thourgh equation string, remembering positions of open parens,
+    # and collectins substrings between open and closed parens.
+    for c in range(0, len(eq)):
+        if eq[c] == '(' : parens.append(c)
+        if eq[c] == ')' : parts.append(eq[parens.pop() : c+1])
+
+    return parts
+
+# Recursive function which takes output from eq_helper
+# to calculate operations on columns.
+# param df The Pandas DataFrame which has all the source columns,
+#    such as banki_complete.csv
+# param sets The list returned from eq_helper.
+# param tmp_col To calculate multiple operations, we save the result of one operation to a column, then operate on that temporary column to continue.
+# Returns Pandas Series - The calculated column.
+def df_eval_equations(df, sets, tmp_col=0):
+    
+    # Eventually, the final element of sets will be the Series.
+    if type(sets) == pd.Series:
+        return sets
+
+    # Set the current working string to the first element of sets.
+    this = sets[0]
+    operator = this[1]            # Save the operator.
+    operands = this[3:-1].split() # Get the operands.
+    
+    # The temporary result begins with the value of the first operand.
+    tmp_result = df[operands[0]]
+    
+    # For all the operands...
+    for op in range(1, len(operands)):
+
+        # Set the column with which to operate.
+        op_value = df[operands[op]]
+    
+        # Math.
+        if operator == '/': tmp_result = tmp_result / op_value
+        if operator == '*': tmp_result = tmp_result * op_value
+        if operator == '+': tmp_result = tmp_result + op_value
+        if operator == '-': tmp_result = tmp_result - op_value
+        if operator == '^': tmp_result = tmp_result ** op_value
+
+    # If sets > 1, then there are more operations to parse.
+    if len(sets) > 1:
+        # Make a temporary column.
+        tmp_col += 1
+        # Set the new temporary column to the value of the temp result.
+        df[str(tmp_col)] = tmp_result
+        # Change the final element of sets (the full equation string),
+        # such that the current equation string is replaced by the
+        # temporary column name we just created.
+        # Example:
+            # sets: [(+ N1 N2), (/ (+ N1 N2) loans)]
+            #  -> : [(+ N1 N2), (/ 1 loans)]
+        sets[-1] = sets[-1].replace(this, str(tmp_col))
+        # Continue evaluting, removing the first element of sets.
+        return df_eval_equations(df, sets[1:], tmp_col)
+    # If sets has only one element left, then we have finished evaluting.
+    else:
+        # Make sets tmp_result, the final result.
+        # When sets goes through the recursion, the type test will capture it,
+        # and return the final result.
+        sets = tmp_result
+        return df_eval_equations(df, sets, tmp_col)
+
+####################################
+
+
+parsed_args = parse_select(args.select)
+
+singular_cols  = parsed_args[0]
+range_cols     = parsed_args[1]
+equation_cols  = parsed_args[2] 
+
+# Load indicator and revocation datasets.
+if args.redownload:
+    banki   = load_banki(redownload = True)
+    revoked = load_banki_revoked(redownload = True)
+    banki_complete = merge_banki_revoked(banki, revoked)
+    
+elif args.update:
+    banki    = load_banki(update = True)
+    revoked  = load_banki_revoked(update = True)
+    banki_complete = merge_banki_revoked(banki, revoked)
 else:
-    # Load banki indicator dataset.
-    banki = load_banki(update=args.update_banki,
-                   redownload=args.redownload_banki)
-
-    # Load banki license revocations dataset.
-    revoked = load_banki_revoked(update=args.update_revoked,
-                             redownload=args.redownload_revoked)
-
-    # Merge the two.
-    banki = merge_banki_revoked(banki, revoked)
+    banki_complete = pd.read_csv('../csv/banki_complete.csv', index_col=False)
 
 
-#############################################
-## Post-Processing for Command-Line Arguments
-#############################################
+# Add singular columns first.
+model_data = banki_complete[['lic_num','period','months'] + singular_cols]
 
-# Remove duplicates from select.
+print model_data.head().to_string()
 
-select = list(set(select))
-columns = select + new_bin_ranges
-columns = list(set(columns))
-
-# Now we're ready to modify and cleanup the final dataset.
-# Here, we add our singular columns and special requests to the table.
-
-# TODO: Generalize this
-if args.cbr:
-        model_data = cbr[['lic_num', 'period', 'months'] + columns]
-else:
-        model_data = banki[['lic_num', 'period', 'months'] + columns]
-
-# Add new column binary classifiers to model_data.csv.
-for col in new_bin_ranges:
-	# The ratios are defined in dictionaries.py
+# Add ! columns:
+for col in range_cols:
     r = get_ratio(col)
+    
+    new_col = col + '!'
+    model_data[new_col] = banki_complete[col].apply(lambda x: r[0] <= x <= r[1] if pd.notnull(x) else None)
 
-	# Add the new column with empty values. It keeps the ! in the name.
-    model_data.insert(len(model_data.columns), col + "!", None)
-    
-    def in_range(x, lb, ub):
-    	if pd.notnull(x):
-    		return lb <= x <= ub
-    
-    # Calculate whether indicator-col is within its defined ratio.
-    model_data[col + "!"] = model_data[col].apply(lambda x: r[0] <= x <= r[1] if pd.notnull(x) else None)
-    
-    if not col in select:
-    	model_data.drop(col, axis=1, inplace=True)
-    
+# Add equation columns:
+model_data = add_eqs(model_data, equation_cols)
 
-seen = new_ratios.values()
-# Add new column ratios and their evaluations to model_data
-for col_name, ops in new_ratios.iteritems():
-	# Evaluate a separate Series. Divide indicator_i by indicator_j
-    
-    col_eval = model_data[ops[0]] / model_data[ops[1]]
-    
-    # If the user specified that they wanted, for example, N2! as well as N2,
-    # then make sure we remove it from ops, so we don't remove it
-    # from model_data.
-    for col in new_bin_ranges:
-        if col in ops:
-        	ops.remove(col)
-	
-
-    seen.remove(ops)
-	
-    for col in ops:
-        # Flattens list [..]
-    	if col in [item for sublist in seen for item in sublist]:
-            ops.remove(col)
-		
-    # Remove operands if they weren't requested to stay.
-    model_data.drop(ops, axis=1, inplace=True)
-    # Add the new column to model_data
-    model_data = model_data.assign(new_col = col_eval)
-    # Rename the column to the actual name we defined earlier.
-    model_data.rename(columns={'new_col':col_name}, inplace=True)
-    
-    model_data[col_name] = model_data[col_name].replace(np.inf, np.nan)
-
-###############################
-## Write to File
-###############################      
-
-print "Writing model data to file..."
-
+print "Writing to csv..."
 model_data.to_csv("../csv/model_data.csv", index=False)
+
+raise SystemExit(0)
