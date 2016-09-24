@@ -41,7 +41,10 @@ call_parse += features
 
 # Run parser to generate custom model_data.csv file
 print("Generating datafile...")
-subprocess.call(call_parse, cwd="../parser") # cwd = Current Working Directory
+try:
+    subprocess.call(call_parse, cwd="../parser") # cwd = Current Working Directory
+except WindowsError:
+    subprocess.call(call_parse, cwd="../parser",shell = True) # cwd = Current Working Directory
 
 print("Importing data...")
 with open('../csv/model_data.csv', 'rb') as csvfile:
