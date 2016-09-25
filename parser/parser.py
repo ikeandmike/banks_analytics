@@ -69,35 +69,107 @@ banki_ind_names = ind_dict_banki_ru()['ind_name'] # Banki indicator names
 ## Function Definitions
 ##################################
 
-def parse_select(orig_select):
-
-    select = orig_select[:] # Make a copy of the original selection.
+# Take the column select argumens (from -s, --select), and put them
+# into bins for further processing.
+# param select The argument list from args.select
+def parse_select(select):
     
-    singular_cols = []   # When parsing the command line, keep these columns.
+    singular_cols = []   # Keep these basic columns.
     range_cols    = []   # Columns are true/false if the Indicator is in range.
-    equation_cols = []   # These are equations between columsn
+    equation_cols = []   # These are equations between columns.
     
-    # Iterate throughe each item asked for selection from the command-line.
+    # Iterate through each selected item from the command-line.
     for i in select:
         # If i is immediately found in the list of indicators,
-        # then is a singularly requested column.
+        # then is a singular, basic column.
         if i in banki_ind_names:
             singular_cols.append(i)
-        # Now, look for operators like ! and /
+        # Now, look for ! operator
         else:
-            # if string.index doesn't find "!", it returns an Exception.
+            # If string.index doesn't find '!', it returns an Exception.
             try:
                 string.index(i, '!')
-                ind_name = string.split(i, '!')[0]
+                ind_name = string.split(i, '!')[0] # Column name without '!'
                 range_cols.append(ind_name)
+            # If the indicator name wasn't found, and it didn't have a '!',
+            # then it is an equation.
             except ValueError:
                 equation_cols.append(i)
-                
-        
-    return [singular_cols, range_cols, equation_cols]
-# End parse_select(..)
 
-# Puts all the helper functions together to add string equations passed
+    return [singular_cols, range_cols, equation_cols]
+
+# Parses equation string into recursive list for eval_eq.
+# Example:
+#   in: '(/ (+ net_assets net_profit) loans)'
+#  out: ['(+ net_assets net_profit)', '(/ (+ net_assets net_profit) loans)']
+def eq_helper(eq):
+    
+    parens = [] # Keeps list of index location of open parentheses.
+    parts  = [] # Collects parts of equation string.
+    
+    # Iterate through equation string, remembering positions of open parens,
+    # and collecting substrings between open and closed parens.
+    for c in range(0, len(eq)):
+    	# Remember position of open positions.
+        if eq[c] == '(' : parens.append(c)
+        # Create substring from open to closing paren.
+        if eq[c] == ')' : parts.append(eq[parens.pop() : c+1])
+
+    return parts
+
+# Takes output from eq_helper to calculate operations on columns.
+# param eq_list The list returned from eq_helper.
+def eval_eq(eq_list):
+
+	# banki_complete.csv has all the indicators, so we can use it
+	# to calculate new values for our current dataframe.
+    banki = pd.read_csv('../csv/banki_complete.csv', index_col=False)
+    
+    # Create temporary columns for extended operations.
+    tmp_col = 0
+
+	# By the final calculation, eq_list will become the value
+	# of the Series we want.
+    while type(eq_list) != pd.Series:
+    
+        this = eq_list[0]          # Set working equation part to first element.
+        operator = this[1]            # Set operator.
+        operands = this[3:-1].split() # Set operands.
+        
+        # The result begins with the value of the first operand.
+        tmp_result = banki[operands[0]]
+        
+        # For each operand.
+        for op in range(1, len(operands)):
+            # Set the column with which to operate.
+            op_value = banki[operands[op]]
+    
+            # Math.
+            if operator == '/': tmp_result = tmp_result / op_value
+            if operator == '*': tmp_result = tmp_result * op_value
+            if operator == '+': tmp_result = tmp_result + op_value
+            if operator == '-': tmp_result = tmp_result - op_value
+            if operator == '^': tmp_result = tmp_result ** op_value
+        
+        # If len > 1, there are more parts to calculate.
+        if len(eq_list) > 1:
+        	# Bump up the temporary column.
+            tmp_col += 1
+            # Set the temporary column to our temporary result.
+            banki[str(tmp_col)] = tmp_result
+            # Replace the part of the equation we just calculted with the
+            # name of temporary column. It will be called in next calculations.
+            eq_list[-1] = eq_list[-1].replace(this, str(tmp_col))      
+            # Remove first element, now that we've finished. 
+            eq_list = eq_list[1:]
+        # If there are no more elements, then tmp_result is final result.
+        else:
+            eq_list = tmp_result
+
+    return eq_list
+
+
+# Puts all the equation helper functions together to add string equations passed
 # from the command line to the model_data DataFrame.
 # param df The DataFrame to which to add the results of the equations.
 # param eq_list The string equations passed from the command line.
@@ -111,127 +183,55 @@ def add_eqs(df, eq_list):
         # Get the recursive form of the equation.
         recursive_eq_str = eq_helper(eq)
         # Evaluate the column.
-        col = df_eval_equations(banki, recursive_eq_str)
+        col = eval_eq(recursive_eq_str)
         # Create a syntatically appropriate column name.
         eq_str_col_name = eq.replace(' ','_')
         # Add it to the DataFrame
         df.insert(len(df.columns), eq_str_col_name, col)
 
     return df
-
-# Parses equation string into recursive list for df_eavl_equations.
-# Example:
-#   in: '(/ (+ net_assets net_profit) loans)'
-#  out: ['(+ net_assets net_profit)', '(/ (+ net_assets net_profit) loans)']
-def eq_helper(eq):
-    
-    parens = [] # Keeps list of index location of opening parentheses.
-    parts  = [] # Collects parts of equation string.
-    
-    # Iterate thourgh equation string, remembering positions of open parens,
-    # and collectins substrings between open and closed parens.
-    for c in range(0, len(eq)):
-        if eq[c] == '(' : parens.append(c)
-        if eq[c] == ')' : parts.append(eq[parens.pop() : c+1])
-
-    return parts
-
-# Recursive function which takes output from eq_helper
-# to calculate operations on columns.
-# param df The Pandas DataFrame which has all the source columns,
-#    such as banki_complete.csv
-# param sets The list returned from eq_helper.
-# param tmp_col To calculate multiple operations, we save the result of one operation to a column, then operate on that temporary column to continue.
-# Returns Pandas Series - The calculated column.
-def df_eval_equations(df, sets, tmp_col=0):
-    
-    # Eventually, the final element of sets will be the Series.
-    if type(sets) == pd.Series:
-        return sets
-
-    # Set the current working string to the first element of sets.
-    this = sets[0]
-    operator = this[1]            # Save the operator.
-    operands = this[3:-1].split() # Get the operands.
-    
-    # The temporary result begins with the value of the first operand.
-    tmp_result = df[operands[0]]
-    
-    # For all the operands...
-    for op in range(1, len(operands)):
-
-        # Set the column with which to operate.
-        op_value = df[operands[op]]
-    
-        # Math.
-        if operator == '/': tmp_result = tmp_result / op_value
-        if operator == '*': tmp_result = tmp_result * op_value
-        if operator == '+': tmp_result = tmp_result + op_value
-        if operator == '-': tmp_result = tmp_result - op_value
-        if operator == '^': tmp_result = tmp_result ** op_value
-
-    # If sets > 1, then there are more operations to parse.
-    if len(sets) > 1:
-        # Make a temporary column.
-        tmp_col += 1
-        # Set the new temporary column to the value of the temp result.
-        df[str(tmp_col)] = tmp_result
-        # Change the final element of sets (the full equation string),
-        # such that the current equation string is replaced by the
-        # temporary column name we just created.
-        # Example:
-            # sets: [(+ N1 N2), (/ (+ N1 N2) loans)]
-            #  -> : [(+ N1 N2), (/ 1 loans)]
-        sets[-1] = sets[-1].replace(this, str(tmp_col))
-        # Continue evaluting, removing the first element of sets.
-        return df_eval_equations(df, sets[1:], tmp_col)
-    # If sets has only one element left, then we have finished evaluting.
-    else:
-        # Make sets tmp_result, the final result.
-        # When sets goes through the recursion, the type test will capture it,
-        # and return the final result.
-        sets = tmp_result
-        return df_eval_equations(df, sets, tmp_col)
-
 ####################################
 
-
+# Parse args.select
 parsed_args = parse_select(args.select)
 
 singular_cols  = parsed_args[0]
 range_cols     = parsed_args[1]
-equation_cols  = parsed_args[2] 
+equation_cols  = parsed_args[2]
 
-# Load indicator and revocation datasets.
+### Load indicator and revocation datasets. ###
 if args.redownload:
     banki   = load_banki(redownload = True)
     revoked = load_banki_revoked(redownload = True)
     banki_complete = merge_banki_revoked(banki, revoked)
-    
+       
 elif args.update:
     banki    = load_banki(update = True)
     revoked  = load_banki_revoked(update = True)
     banki_complete = merge_banki_revoked(banki, revoked)
+
 else:
     banki_complete = pd.read_csv('../csv/banki_complete.csv', index_col=False)
 
-
-# Add singular columns first.
+### Add singular columns first. ###
 model_data = banki_complete[['lic_num','period','months'] + singular_cols]
 
-print model_data.head().to_string()
-
-# Add ! columns:
+### Add ! columns. ###
 for col in range_cols:
-    r = get_ratio(col)
-    
-    new_col = col + '!'
-    model_data[new_col] = banki_complete[col].apply(lambda x: r[0] <= x <= r[1] if pd.notnull(x) else None)
+    r = get_ratio(col) # Ratios defined in dictionaries.py
 
-# Add equation columns:
-model_data = add_eqs(model_data, equation_cols)
+    model_data[col + '!'] = banki_complete[col].apply(
+    	lambda x: r[0] <= x <= r[1] if pd.notnull(x) else None
+    	)
 
-print "Writing to csv..."
-model_data.to_csv("../csv/model_data.csv", index=False)
+### Add equation columns. ###
+if len(equation_cols) > 0:
+	print 'Calculating custom operations...'
+	model_data = add_eqs(model_data, equation_cols)
+
+### Finish
+
+print 'Writing to csv...'
+model_data.to_csv('../csv/model_data.csv', index=False)
 
 raise SystemExit(0)
