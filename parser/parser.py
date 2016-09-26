@@ -55,8 +55,6 @@ args = parser.parse_args()
 
 execfile("dictionaries.py")
 execfile("load_banki.py")
-execfile("load_banki_revoked.py")
-execfile("merge_banki_revoked.py")
 
 # Local datasets:
 banki          = "../csv/banki.csv"           # Banki indicators, no months.
@@ -196,30 +194,21 @@ def add_eqs(df, eq_list):
 ####################################
 
 # Parse args.select
+if args.select == None: args.select = []
 parsed_args = parse_select(args.select)
 
 singular_cols  = parsed_args[0]
 range_cols     = parsed_args[1]
 equation_cols  = parsed_args[2]
 
-### Load indicator and revocation datasets. ###
-if args.redownload:
-    banki   = load_banki(redownload = True)
-    revoked = load_banki_revoked(redownload = True)
-    banki_complete = merge_banki_revoked(banki, revoked)
-       
-elif args.update:
-    banki    = load_banki(update = True)
-    revoked  = load_banki_revoked(update = True)
-    banki_complete = merge_banki_revoked(banki, revoked)
-
-else:
-    banki_complete = pd.read_csv('../csv/banki_complete.csv', index_col=False)
+print 'Loading banki.ru...'
+banki_complete = load_banki(update = args.update, redownload=args.redownload)
 
 ### Add singular columns first. ###
 model_data = banki_complete[['lic_num','period','months'] + singular_cols]
 
 ### Add ! columns. ###
+if len(range_cols) > 0: print 'Calculating ranges...'
 for col in range_cols:
     r = get_ratio(col) # Ratios defined in dictionaries.py
 
@@ -228,9 +217,10 @@ for col in range_cols:
     	)
 
 ### Add equation columns. ###
+if len(equation_cols) > 0: print 'Evaluating expressions...'
 model_data = add_eqs(model_data, equation_cols)
 
-### Finish
+### Finish ###
 
 print 'Writing to csv...'
 model_data.to_csv('../csv/model_data.csv', index=False)
