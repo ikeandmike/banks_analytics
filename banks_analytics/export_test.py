@@ -15,6 +15,12 @@ path = "../out/%s/%s/" % (date, time)
 
 ############################### HELPER FUNCTIONS ###############################
 
+# Generates the folders necessary for the path variable (where the output goes)
+def generate_path():
+	# Create folders if they don't exist
+	if not os.path.exists(path):
+		os.makedirs(path)
+
 # Saves arr to filename.csv
 def output_arr(arr, filename):
 	var_path = path + filename		# Create full path to file
@@ -30,7 +36,7 @@ def output_arr_w_header(arr, filename, header):
 
 	# Output file with header
 	var_path = path + filename
-	with file(var_path, 'w') as outfile:
+	with open(var_path, 'w') as outfile:
 		outfile.write(head_str)
 		np.savetxt(outfile, arr, delimiter=',')
 		outfile.close()
@@ -47,7 +53,7 @@ def export_data_sets(r):
 	output_arr(r.Y_test, "Y_test.csv")
 
 	c_path = path + "c.txt"
-	with file(c_path, 'w') as outfile:
+	with open(c_path, 'w') as outfile:
 		outfile.write(str(r.C))
 		outfile.close()
 
@@ -68,9 +74,7 @@ def export_results(r):
 # Writes run reports to txt files, returns paths to files
 # r = a ModelResults object
 def export_test(r):
-	# Create folders if they don't exist
-	if not os.path.exists(path):
-		os.makedirs(path)
+	generate_path()
 
 	export_data_sets(r)
 	export_results(r)
