@@ -24,8 +24,6 @@ class ModelResults:
 		self.f1          = np.array([])
 
 	def addResults(self, C, coef, predict_arr, prob_arr, precision, recall, f1):
-		# Round values in prob_arr before storing		
-		#self.round_2d_arr(prob_arr, 3)
 
 		self.C		 = C
 		self.coef	 = coef
