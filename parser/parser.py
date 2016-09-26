@@ -63,7 +63,8 @@ banki          = "../csv/banki.csv"           # Banki indicators, no months.
 banki_revoked  = "../csv/banki_revoked.csv"   # Banki revocation dates.
 banki_complete = "../csv/banki_complete.csv"  # Banki inds. and months.
 
-banki_ind_names = ind_dict_banki_ru()['ind_name'] + cbr_standards() # Banki indicator names
+# Banki indicator names and cbr hacked in there.
+banki_ind_names = ind_dict_banki_ru()['ind_name'] + cbr_standards() 
 
 ##################################
 
