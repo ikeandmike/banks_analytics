@@ -65,8 +65,6 @@ banki_complete = "../csv/banki_complete.csv"  # Banki inds. and months.
 
 banki_ind_names = ind_dict_banki_ru()['ind_name'] + cbr_standards() # Banki indicator names
 
-print banki_ind_names
-
 ##################################
 
 ##################################
