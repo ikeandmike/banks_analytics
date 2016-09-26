@@ -90,7 +90,10 @@ def ratio_dict():
                         'N7',    # [20]
                         'N9_1',  # [21]
                         'N10_1', # [22]
-                        'N12'],  # [23]
+                        'N12',   # [23]
+                        'N1_0',  # [24]
+                        'N1_1',  # [25]
+                        'N1_2'], # [2]
             'ind_ratio':[None, # [0] net_assets
                          None, # [1] net_profit
                          None, # [2] equity_form123
@@ -114,7 +117,10 @@ def ratio_dict():
                          [-sys.maxint-1,8.0],   # [20] N7
                          [-sys.maxint-1,0.5],   # [21] N9_1
                          [-sys.maxint-1,0.03],  # [22] N10_1
-                         [-sys.maxint-1,0.25]]} # [23] N12
+                         [-sys.maxint-1,0.25],  # [23] N12
+                         [0.08,sys.maxint],     # [24] N1_0
+                         [0.045,sys.maxint],    # [25] N1_1
+                         [0.06,sys.maxint]]}    # [26] N1_2
                 
 def get_ratio(inds):
 
