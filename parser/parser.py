@@ -225,13 +225,9 @@ for col in range_cols:
     	)
 
 ### Add equation columns. ###
-if len(equation_cols) > 0:
-	print 'Calculating custom operations...'
-	model_data = add_eqs(model_data, equation_cols)
+model_data = add_eqs(model_data, equation_cols)
 
 ### Finish
 
 print 'Writing to csv...'
 model_data.to_csv('../csv/model_data.csv', index=False)
-
-raise SystemExit(0)
