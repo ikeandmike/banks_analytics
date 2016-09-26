@@ -27,13 +27,23 @@ print("WPI/Deloitte Regression Model for Predicting License Revocation of Russia
 
 # Argument Parsing
 parser = argparse.ArgumentParser()
-c_test = parser.add_mutually_exclusive_group()
-c_test.add_argument("-ct", "--c_test", help="Used by c_test.py to output several runs to one file; give this option the path to the file where all results should be stored")
 c_par = parser.add_mutually_exclusive_group()
 c_par.add_argument("-c", "--pass_c", help="Pass in value for C for model to use.")
 seed_par = parser.add_mutually_exclusive_group()
 seed_par.add_argument("-s", "--seed", help="Pass seed for train_test_split.")
+desc = parser.add_mutually_exclusive_group()
+desc.add_argument("-d", "--description", help="Give text to describe model run type. Will be stored in description.txt")
+c_test = parser.add_mutually_exclusive_group()
+c_test.add_argument("-ct", "--c_test", help="Used by c_test.py to output several runs to one file; give this option the path to the file where all results should be stored")
 args = parser.parse_args()
+
+if args.description != None:
+	generate_path() # Generate folders for path if they don't exist
+
+	descFile = path + "description.txt"
+	with open(descFile, "w") as fp:
+		fp.write(args.description)
+		fp.close()
 
 call_parse = ["../parser/parser.py", "-s"]
 features = ["return_on_net_assets", "return_on_equity"] # NOTE: Change *this* array to add features to model

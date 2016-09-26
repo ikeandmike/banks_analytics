@@ -15,12 +15,9 @@ from export_test import *
 # Array of C values to run model on
 vals = np.array([ 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.75, 0.9, 0.95, 1.0 ])
 
-# Create header of results file
-fileName = path + "c_test.txt"
+fileName = path + "c_test.txt" # Create header of results file
 
-# Create folders if they don't exist
-if not os.path.exists(path):
-	os.makedirs(path)
+generate_path() # Create folders if they don't exist
 
 with open(fileName, "w") as myfile:
 	myfile.write("Results of C-value testing\n")
