@@ -6,6 +6,8 @@ import datetime as dt
 import argparse
 import string
 
+import pdb
+
 pd.options.mode.chained_assignment = None
 
 ###############################
@@ -61,7 +63,9 @@ banki          = "../csv/banki.csv"           # Banki indicators, no months.
 banki_revoked  = "../csv/banki_revoked.csv"   # Banki revocation dates.
 banki_complete = "../csv/banki_complete.csv"  # Banki inds. and months.
 
-banki_ind_names = ind_dict_banki_ru()['ind_name'] # Banki indicator names
+banki_ind_names = ind_dict_banki_ru()['ind_name'] + cbr_standards() # Banki indicator names
+
+print banki_ind_names
 
 ##################################
 

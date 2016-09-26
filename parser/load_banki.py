@@ -14,48 +14,45 @@ execfile("dictionaries.py")
 # param ind_codes A single code or an array of indicator codes. These
 #   codes are defined by banki.ru and held in dictionaries.py
 # returns Pandas DataFrame of dataset. Writes to csv.
-def load_banki (ind_codes = None, update=False, redownload=False):
+def load_banki (update=False, redownload=False):
 
     now = dt.datetime.now()
 
     print "Loading banki.ru's indicator dataset."
 
-    br_file = "../csv/banki.csv"
-    br_exists = os.path.isfile(br_file)
+    file_banki = "../csv/banki.csv"
 
     # If the user wants to redownload then redownload.
     # If the file doesn't exist, then we'll have to redownload anyway.
-    if (not br_exists) or redownload:
+    if redownload:
         banki_final = pd.DataFrame()
         # We'll start at the first year available.
         start_year_download = 2008
         start_month_download = 1
         # We'll download all indicators.
         ind_codes = ind_dict_banki_ru()['ind_num']
-        if not br_exists:
-            print "No local dataset found. Re-downloading full dataset."
+
     # If the file exists, and the user doesn't want to update it,
     #   then read the csv and return it as a pandas DataFrame.
     # If they want to update it, then set banki_final to local dataset,
     #   and read banki.ru, stopping as soon as there are duplicates.
-    elif br_exists:
-        if not update:
-            return pd.read_csv(br_file)
-        else:
-            print "Updating..."
-            banki_final = pd.read_csv(br_file)
-            banki_final['period'] = pd.to_datetime(banki_final['period'])
-            start_year_download = now.year
-            if now.month == 1:
-                start_month_download = 12
-            else:
-                start_month_download = now.month - 1
-            if ind_codes == None:
-                ind_codes = ind_dict_banki_ru()['ind_num']
+    elif update:
+    	print "Updating..."
+    	banki_final = pd.read_csv(file_banki, index_col=False)
+    	banki_final['period'] = pd.to_datetime(banki_final['period'])
+    	start_year_download = now.year
+    	if now.month == 1:
+    		start_month_download = 12
+    	else:
+    		start_month_download = now.month - 1
+    	if ind_codes == None:
+    		ind_codes = ind_dict_banki_ru()['ind_num']
+	else:
+		return pd.read_csv(file_banki, index_col=False)
 
-###############################
-## Download banki.ru dataset
-###############################
+	###############################
+	## Download banki.ru dataset
+	###############################
 
     # For each indicator, for every month of every year.
     for k in ind_codes:
@@ -99,14 +96,7 @@ def load_banki (ind_codes = None, update=False, redownload=False):
                 if len(banki_table.columns) == 9:
                     banki_table.columns = ['rating', 'rating_change', 'bank_name','lic_num',
                                            'region', 'ind_val', 'ind_start', 'change', 'perc_change']
-#                    try:
-                    banki_table.drop(['rating'], axis=1, inplace=True) # TODO: is this doing anything?
-#                    #except:
-#                        pass
-#                    try:
-                    banki_table.drop(['change'], axis=1, inplace=True) # TODO: anything at all?
-#                    except:
-#                        pass
+                    banki_table.drop(['rating', 'change'], axis=1, inplace=True)
                 else:                       
                     banki_table.columns = ['rating_change', 'bank_name', 'lic_num',
                                            'region', 'ind_val', 'ind_start', 'perc_change', 'empty']
