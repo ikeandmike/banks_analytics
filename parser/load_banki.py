@@ -303,12 +303,14 @@ def load_banki_revoked(update=False, redownload=False):
 # returns DataFrame
 def complete_banki(banki, revoked):
 
+	print 'Completing banki...'
+
     merged = banki.merge(revoked, how='left', on='lic_num')
 
     merged['period'] = pd.to_datetime(merged['period'])
     merged['revoc_date'] = pd.to_datetime(merged['revoc_date'])
 
-    print "Calculating months..."
+    print '    Calculating months...'
     for row in merged.itertuples():
         if pd.notnull(row[-1]):
             merged = merged.set_value(row[0], 'months',
@@ -328,12 +330,17 @@ def complete_banki(banki, revoked):
     cols = merged.columns.tolist()
     cols = cols[0:2] + cols[-1:] + cols[2:-1]
 
-    merged = merged[cols]
+    complete = merged[cols]
+    
+    print '    Merging with local CBR file...'
+    
+    cbr = pd.read_csv('../csv/cbr_standards_complete.csv', index_col=False)
+    cbr['period'] = pd.to_datetime(cbr['period'])
+    cbr.drop(['N1','N2','N3'], axis = 1, inplace=True)
+    
+    complete = complete.merge(cbr, how='outer', on=['lic_num', 'period', 'months'])
+    complete.to_csv('../csv/banki_complete.csv', index=False)
 
-    print "Writing merged set with months to file..."
+    print '    Returning...'
 
-    merged.to_csv("../csv/banki_complete.csv", index=False)
-
-    print "Returning..."
-
-    return merged
+    return complete
