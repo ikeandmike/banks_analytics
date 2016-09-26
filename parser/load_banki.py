@@ -305,42 +305,42 @@ def complete_banki(banki, revoked):
 
 	print 'Completing banki...'
 
-    merged = banki.merge(revoked, how='left', on='lic_num')
+	merged = banki.merge(revoked, how='left', on='lic_num')
 
-    merged['period'] = pd.to_datetime(merged['period'])
-    merged['revoc_date'] = pd.to_datetime(merged['revoc_date'])
+	merged['period'] = pd.to_datetime(merged['period'])
+	merged['revoc_date'] = pd.to_datetime(merged['revoc_date'])
 
-    print '    Calculating months...'
-    for row in merged.itertuples():
-        if pd.notnull(row[-1]):
-            merged = merged.set_value(row[0], 'months',
-                12 * (row[-1].year - row[2].year) +
-                (row[-1].month - row[2].month))
-        else:
-            merged = merged.set_value(row[0], 'months', 9000)
+	print '    Calculating months...'
+	for row in merged.itertuples():
+		if pd.notnull(row[-1]):
+			merged = merged.set_value(row[0], 'months',
+				12 * (row[-1].year - row[2].year) +
+				(row[-1].month - row[2].month))
+		else:
+			merged = merged.set_value(row[0], 'months', 9000)
 
-    for row in merged.itertuples():
-        if row[-1] > 24 and row[-1] < 9000:
-            merged = merged.set_value(row[0], 'months', 1000)
+	for row in merged.itertuples():
+		if row[-1] > 24 and row[-1] < 9000:
+			merged = merged.set_value(row[0], 'months', 1000)
 
 
-    merged.drop('revoc_date', axis=1, inplace=True)
+	merged.drop('revoc_date', axis=1, inplace=True)
 
-    # Moves 'months' from last column to the third column.
-    cols = merged.columns.tolist()
-    cols = cols[0:2] + cols[-1:] + cols[2:-1]
+	# Moves 'months' from last column to the third column.
+	cols = merged.columns.tolist()
+	cols = cols[0:2] + cols[-1:] + cols[2:-1]
 
-    complete = merged[cols]
-    
-    print '    Merging with local CBR file...'
-    
-    cbr = pd.read_csv('../csv/cbr_standards_complete.csv', index_col=False)
-    cbr['period'] = pd.to_datetime(cbr['period'])
-    cbr.drop(['N1','N2','N3'], axis = 1, inplace=True)
-    
-    complete = complete.merge(cbr, how='outer', on=['lic_num', 'period', 'months'])
-    complete.to_csv('../csv/banki_complete.csv', index=False)
+	complete = merged[cols]
 
-    print '    Returning...'
+	print '    Merging with local CBR file...'
 
-    return complete
+	cbr = pd.read_csv('../csv/cbr_standards_complete.csv', index_col=False)
+	cbr['period'] = pd.to_datetime(cbr['period'])
+	cbr.drop(['N1','N2','N3'], axis = 1, inplace=True)
+
+	complete = complete.merge(cbr, how='outer', on=['lic_num', 'period', 'months'])
+	complete.to_csv('../csv/banki_complete.csv', index=False)
+
+	print '    Returning...'
+
+	return complete
