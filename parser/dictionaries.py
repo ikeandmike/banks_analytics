@@ -93,7 +93,7 @@ def ratio_dict():
                         'N12',   # [23]
                         'N1_0',  # [24]
                         'N1_1',  # [25]
-                        'N1_2'], # [2]
+                        'N1_2'], # [26]
             'ind_ratio':[None, # [0] net_assets
                          None, # [1] net_profit
                          None, # [2] equity_form123
