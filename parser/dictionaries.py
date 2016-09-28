@@ -19,8 +19,28 @@ def ind_dict_banki_ru():
                        1550, # [14] foreign_currency_operations_rub
                        1600, # [15] N1
                        1700, # [16] N2
-                       1800,
-                       100],# [17] N3
+                       1800, # [17]
+                       100,  # [18] 
+                       250,  # [19] overdrafts_and_other_funds_procided
+                       260,  # [20] overdue_debt
+                       120,  # [21] inter-bank_loans_issued
+                       121,  # [22] interbank_credit_in_cbr
+                       1210, # [23] interbank_credit_in_cbr_turnover
+                       122,  # [24] issued_interbank, turnover
+                       300,  # [25] loans_extended_to_businesses_and_institutions
+                       310,  # [26] for_a_term_of_up_to_6_months
+                       320,  # [27] for_a_term_of_6_moths_to_1_year
+                       330,  # [28] for_a_term_of_1_year_to_3_years
+                       340,  # [29] for_a_term_over_3_years
+                       350,  # [30] overdrafts
+                       360,  # [31] overdue_debt_1
+                       600,  # [32] interbank_loans_raised
+                       610,  # [33] attracted_interbank_loans_turnover
+                       620,  # [34] attracted_interbank_loans_from_cbr
+                       621,] # [35] attracted_interbank_loans_from_cbr_turnover
+
+
+
             'ind_name':['net_assets',            # [0] 10
                         'net_profit',            # [1] 30
                         'equity_form123',        # [2] 25
