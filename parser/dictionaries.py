@@ -39,7 +39,7 @@ def ind_dict_banki_ru():
                         'N1',  # [15] 1600
                         'N2',  # [16] 1700
                         'N3',
-                        'net_assets_carrying']} # [17] 1800
+                        'net_assets_ca']} # [17] 1800
 
 # param key 'ind_num' or 'ind_name'
 def get_ind(inds):
