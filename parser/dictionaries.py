@@ -19,7 +19,8 @@ def ind_dict_banki_ru():
                        1550, # [14] foreign_currency_operations_rub
                        1600, # [15] N1
                        1700, # [16] N2
-                       1800],# [17] N3
+                       1800,
+                       100],# [17] N3
             'ind_name':['net_assets',            # [0] 10
                         'net_profit',            # [1] 30
                         'equity_form123',        # [2] 25
@@ -37,7 +38,8 @@ def ind_dict_banki_ru():
                         'foreign_currency_operations_rub',           # [14] 1550
                         'N1',  # [15] 1600
                         'N2',  # [16] 1700
-                        'N3']} # [17] 1800
+                        'N3',
+                        'net_assets_carrying']} # [17] 1800
 
 # param key 'ind_num' or 'ind_name'
 def get_ind(inds):
