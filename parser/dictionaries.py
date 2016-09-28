@@ -58,8 +58,25 @@ def ind_dict_banki_ru():
                         'foreign_currency_operations_rub',           # [14] 1550
                         'N1',  # [15] 1600
                         'N2',  # [16] 1700
-                        'N3',
-                        'net_assets_ca']} # [17] 1800
+                        'N3',  # [17]
+                        'net_assets_ca', # [18] 1800
+                        'overdrafts_and_other_funds_procided',# [19] 250
+                        'overdue_debt',# [20] 260
+                        'inter-bank_loans_issued',# [21] 120
+                        'interbank_credit_in_cbr',# [22] 121
+                        'interbank_credit_in_cbr_turnover',# [23] 1210
+                        'issued_interbank, turnover',# [24] 122
+                        'loans_extended_to_businesses_and_institutions',# [25] 300
+                        'for_a_term_of_up_to_6_months',# [26] 310
+                        'for_a_term_of_6_moths_to_1_year',# [27] 320
+                        'for_a_term_of_1_year_to_3_years',# [28] 330
+                        'for_a_term_over_3_years',# [29] 340
+                        'overdrafts',# [30] 350 
+                        'overdue_debt_1',# [31]360 
+                        'interbank_loans_raised',# [32] 600
+                        'attracted_interbank_loans_turnover',# [33] 610
+                        'attracted_interbank_loans_from_cbr',# [34] 620
+                        'attracted_interbank_loans_from_cbr_turnover']}# [35] 621
 
 # param key 'ind_num' or 'ind_name'
 def get_ind(inds):
