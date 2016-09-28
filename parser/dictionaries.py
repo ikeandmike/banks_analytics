@@ -37,10 +37,7 @@ def ind_dict_banki_ru():
                        600,  # [32] interbank_loans_raised
                        610,  # [33] attracted_interbank_loans_turnover
                        620,  # [34] attracted_interbank_loans_from_cbr
-                       621,] # [35] attracted_interbank_loans_from_cbr_turnover
-
-
-
+                       621], # [35] attracted_interbank_loans_from_cbr_turnover
             'ind_name':['net_assets',            # [0] 10
                         'net_profit',            # [1] 30
                         'equity_form123',        # [2] 25
@@ -58,8 +55,8 @@ def ind_dict_banki_ru():
                         'foreign_currency_operations_rub',           # [14] 1550
                         'N1',  # [15] 1600
                         'N2',  # [16] 1700
-                        'N3',  # [17]
-                        'net_assets_ca', # [18] 1800
+                        'N3',  # [17] 1800
+                        'net_assets_ca', # [18] 100
                         'overdrafts_and_other_funds_procided',# [19] 250
                         'overdue_debt',# [20] 260
                         'inter-bank_loans_issued',# [21] 120
