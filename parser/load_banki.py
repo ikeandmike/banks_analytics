@@ -4,11 +4,18 @@ import datetime as dt
 from sys import stdout
 import os
 import pdb
+import signal
 
 ERASE_LINE = '\x1b[2K'
 RETURN = '\r' + ERASE_LINE
 
+# Global 90 second timeout for read_csv from banki. See handler below.
+TIMEOUT = 90
+
 execfile("dictionaries.py")
+
+def timeout_handler(signum, frame):
+	raise Exception('\n' + str(TIMEOUT) + ' second timeout reached. Continuing...')
 
 # Updates or redownloads banki indicator and revocation datasets.
 # Calculates months. Merges with CBR.
@@ -78,14 +85,20 @@ def download_ind_from_date(ind, year, month):
         "&date2=" + time_start + \
         "&IS_SHOW_GROUP=0&IS_SHOW_LIABILITIES=0"
 
-    #stdout.write(RETURN)
-    print 'Downloading', get_ind(ind), time_end[0:-3]
-    #stdout.write ('\rDownloading ' + get_ind(ind) + ', ' + time_end[0:-3])
-    #stdout.flush()
+    stdout.write(RETURN)
+    stdout.write( '\rDownloading ' + get_ind(ind) + ', ' + time_end[0:-3])
+    stdout.flush()
     
     # Download banki table.
-    df = pd.read_csv(url, delimiter=";",
-                    skiprows=3, error_bad_lines=False, warn_bad_lines=True)
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(TIMEOUT)
+    try:
+		df = pd.read_csv(url, delimiter=";", skiprows=3, error_bad_lines=False, warn_bad_lines=True)
+    except Exception, e:
+    	df = pd.DataFrame()
+    	print e
+
+	signal.alarm(0) # Cancel signal alarm
 
     # Cleanup data if it exists.
     if not df.empty:
@@ -199,7 +212,6 @@ def help_iterdate_update(ind, banki):
         for month in range(12, 0, -1):
             tmp = download_ind_from_date(ind, year, month)
             if type(tmp) == pd.DataFrame:
-                pdb.set_trace()
                 banki = banki.append(tmp)
                 dups = banki.duplicated(['lic_num','period','ind'], keep=False)
                 if any(dups):
@@ -211,14 +223,14 @@ def help_iterdate_update(ind, banki):
 # returns DataFrame
 def export_banki(final):
     
-    final.pivot_banki(final, wide_or_tall='wide')
+    final = pivot_banki(final, wide_or_tall='wide')
     final.sort_values(['lic_num', 'period'],
         ascending=[True, False], inplace=True) 
     
     print 'Writing banki.csv...'
     final.to_csv('../csv/banki.csv', index=False)
     
-    return banki
+    return final
 
 # banki.ru records the dates of license revocations in webpage-separated
 # html tables. One webpage has 50 records. When the page index becomes
@@ -252,7 +264,7 @@ def load_banki_revoked(update=False, redownload=False):
     elif update:
         print "Updating..."
         banki_revoked = pd.read_csv(br_file, index_col=False)
-        banki_revoked['period'] = pd.to_datetime(banki_revoked['period']) 
+        banki_revoked['revoc_date'] = pd.to_datetime(banki_revoked['revoc_date']) 
     else:
         return pd.read_csv(br_file)
 

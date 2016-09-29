@@ -19,31 +19,39 @@ parser = argparse.ArgumentParser()
 
 # Banki indicator dataset argument group.
 # One can only update or redownload, but not both.
-group = parser.add_mutually_exclusive_group()
+group_banki = parser.add_mutually_exclusive_group()
 
-group.add_argument(
-	"-u",
-	"--update",
-	action="store_true",
-	help="Update banki.ru indicator and revocation datasets."
+group_banki.add_argument(
+	'-u',
+	'--update',
+	action='store_true',
+	help='Update banki.ru indicator and revocation datasets.'
 	)
-group.add_argument(
-	"-r",
-	"--redownload",
-	action="store_true",
-	help="Redownload banki.ru indicator and revocation dataset."
+group_banki.add_argument(
+	'-r',
+	'--redownload',
+	action='store_true',
+	help='Redownload banki.ru indicator and revocation dataset.'
+	)
+	
+# Print indicators one can use for the model and exit.
+parser.add_argument(
+	'-i',
+	'--indicators',
+	action='store_true',
+	help='Prints list of available indicators from banki.ru and CBR and exits.'
 	)
 
 # User can pass column names to the script
 parser.add_argument(
-    "-s",
-    "--select",
-    metavar="COLUMNS",
+    '-s',
+    '--select',
+    metavar='COLUMNS',
     nargs='*',
     help="Select columns from indicator dataset to use in model. \
     To receive binary indicators (ie. is indicator in acceptable range) \
     add a bang after the indicator (ie. 'N1!'). To calculate values between \
-    indicators, use Lisp notation: (/ (+ net_assets net_profit) loans)"
+    indicators, use Lisp notation: '(/ (+ net_assets net_profit) loans)'"
     )
 
 args = parser.parse_args()
@@ -63,6 +71,13 @@ banki_complete = "../csv/banki_complete.csv"  # Banki inds. and months.
 
 # Banki indicator names and cbr hacked in there.
 banki_ind_names = ind_dict_banki_ru()['ind_name'] + cbr_standards() 
+
+if args.indicators:
+	print 'Selectable indicators to run for the model:'
+	for i in banki_ind_names:
+		print i
+	raise SystemExit(0)
+
 
 ##################################
 
@@ -137,9 +152,20 @@ def eval_eq(eq_list):
         operator = this[1]            # Set operator.
         operands = this[3:-1].split() # Set operands.
         
+        # Check names for validity.
+        bad_names = []
+        for op in operands:
+        	if not op in list(banki.columns):
+        		bad_names.append(op)
+        if not bad_names.empty:
+        	print 'There were invalid indicator names found in equation',this
+        	print 'Invalid:', bad_names
+        	print 'Run `python parser.py -i` for a list of valid names.'
+        	raise SystemExit(0)
+        
         # The result begins with the value of the first operand.
         tmp_result = banki[operands[0]]
-        
+
         # For each operand.
         for op in range(1, len(operands)):
             # Set the column with which to operate.
