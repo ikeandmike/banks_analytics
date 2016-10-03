@@ -6,10 +6,11 @@ import numpy as np
 
 from ModelResults import ModelResults # Class I made for storing details (used for exporting to txt file, for creating graphs etc.)
 
+############################# CREATE PATH VARIABLE #############################
+
 date = str(datetime.date.today())
 time = str(datetime.datetime.now().time())[:8]
-
-############################# CREATE PATH VARIABLE #############################
+time = time.replace(":", "-") # Replace colons - Windows paths cannot have them
 
 path = "../out/%s/%s/" % (date, time)
 
