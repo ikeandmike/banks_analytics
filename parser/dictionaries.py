@@ -14,7 +14,7 @@ def ind_dict_banki_ru():
                        1100, # [9] return_on_equity
                        1200, # [10] overdue_loans_share
                        1300, # [11] reserve_to_loans
-                       1400, # [12] mortaged_property_to_loans
+                       1400, # [12] mortgaged_property_to_loans
                        1500, # [13] foreign_currency_operations_to_net_assets
                        1550, # [14] foreign_currency_operations_rub
                        1600, # [15] N1
@@ -29,7 +29,7 @@ def ind_dict_banki_ru():
                        122,  # [24] issued_interbank, turnover
                        300,  # [25] loans_extended_to_businesses_and_institutions
                        310,  # [26] for_a_term_of_up_to_6_months
-                       320,  # [27] for_a_term_of_6_moths_to_1_year
+                       320,  # [27] for_a_term_of_6_months_to_1_year
                        330,  # [28] for_a_term_of_1_year_to_3_years
                        340,  # [29] for_a_term_over_3_years
                        350,  # [30] overdrafts
@@ -50,7 +50,7 @@ def ind_dict_banki_ru():
                         'return_on_equity',      # [9] 1100
                         'overdue_loans_share',   # [10] 1200
                         'reserve_to_loans',      # [11] 1300
-                        'mortaged_property_to_loans', # [12] 1400
+                        'mortgaged_property_to_loans', # [12] 1400
                         'foreign_currency_operations_to_net_assets', # [13] 1500
                         'foreign_currency_operations_rub',           # [14] 1550
                         'N1',  # [15] 1600
@@ -65,7 +65,7 @@ def ind_dict_banki_ru():
                         'issued_interbank, turnover',# [24] 122
                         'loans_extended_to_businesses_and_institutions',# [25] 300
                         'for_a_term_of_up_to_6_months',# [26] 310
-                        'for_a_term_of_6_moths_to_1_year',# [27] 320
+                        'for_a_term_of_6_months_to_1_year',# [27] 320
                         'for_a_term_of_1_year_to_3_years',# [28] 330
                         'for_a_term_over_3_years',# [29] 340
                         'overdrafts',# [30] 350 
@@ -115,21 +115,20 @@ def ratio_dict():
                         'return_on_equity',      # [9]
                         'overdue_loans_share',   # [10]
                         'reserve_to_loans',      # [11]
-                        'mortaged_property_to_loans', # [12]
+                        'mortgaged_property_to_loans', # [12]
                         'foreign_currency_operations_to_net_assets', # [13]
                         'foreign_currency_operations_rub',           # [14]
                         'N1',    # [15]
                         'N2',    # [16]
                         'N3',    # [17]
                         'N4',    # [18]
-                        'N6',    # [19]
-                        'N7',    # [20]
-                        'N9_1',  # [21]
-                        'N10_1', # [22]
-                        'N12',   # [23]
-                        'N1_0',  # [24]
-                        'N1_1',  # [25]
-                        'N1_2'], # [26]
+                        'N7',    # [19]
+                        'N9_1',  # [20]
+                        'N10_1', # [21]
+                        'N12',   # [22]
+                        'N1_0',  # [23]
+                        'N1_1',  # [24]
+                        'N1_2'], # [25]
             'ind_ratio':[None, # [0] net_assets
                          None, # [1] net_profit
                          None, # [2] equity_form123
@@ -142,21 +141,20 @@ def ratio_dict():
                          [0.08,sys.maxint], # [9] return_on_equity
                          None, # [10] overdue_loans_share
                          None, # [11] reserve_to_loans
-                         None, # [12] mortaged_property_to_loans
+                         None, # [12] mortgaged_property_to_loans
                          None, # [13] foreign_currency_operations_to_net_assets
                          None, # [14] foreign_currency_operations_rub
                          [0.1,sys.maxint],      # [15] N1
                          [0.15,sys.maxint],     # [16] N2
                          [0.5,sys.maxint],      # [17] N3
                          [-sys.maxint-1,1.2],   # [18] N4
-                         [-sys.maxint-1,0.25],  # [19] N6
-                         [-sys.maxint-1,8.0],   # [20] N7
-                         [-sys.maxint-1,0.5],   # [21] N9_1
-                         [-sys.maxint-1,0.03],  # [22] N10_1
-                         [-sys.maxint-1,0.25],  # [23] N12
-                         [0.08,sys.maxint],     # [24] N1_0
-                         [0.045,sys.maxint],    # [25] N1_1
-                         [0.06,sys.maxint]]}    # [26] N1_2
+                         [-sys.maxint-1,8.0],   # [19] N7
+                         [-sys.maxint-1,0.5],   # [20] N9_1
+                         [-sys.maxint-1,0.03],  # [21] N10_1
+                         [-sys.maxint-1,0.25],  # [22] N12
+                         [0.08,sys.maxint],     # [23] N1_0
+                         [0.045,sys.maxint],    # [24] N1_1
+                         [0.06,sys.maxint]]}    # [25] N1_2
                 
 def get_ratio(inds):
 

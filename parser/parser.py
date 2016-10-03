@@ -102,15 +102,13 @@ def parse_select(select):
             singular_cols.append(i)
         # Now, look for ! operator
         else:
-            # If string.index doesn't find '!', it returns an Exception.
-            try:
-                string.index(i, '!')
-                ind_name = string.split(i, '!')[0] # Column name without '!'
-                range_cols.append(ind_name)
-            # If the indicator name wasn't found, and it didn't have a '!',
-            # then it is an equation.
-            except ValueError:
-                equation_cols.append(i)
+			bangs = i.find('!')
+			if bangs != -1:
+				ind_name = string.split(i, '!')[0]
+				range_cols.append(ind_name)
+			paren = i.find('(')
+			if paren != 1:
+				equation_cols.append(i)
 
     return [singular_cols, range_cols, equation_cols]
 
@@ -136,6 +134,8 @@ def eq_helper(eq):
 # Takes output from eq_helper to calculate operations on columns.
 # param eq_list The list returned from eq_helper.
 def eval_eq(eq_list):
+	
+	#pdb.set_trace()
 
 	if not len(eq_list) > 0: return None
 
@@ -159,7 +159,7 @@ def eval_eq(eq_list):
 		for op in operands:
 			if not op in list(banki.columns):
 				bad_names.append(op)
-		if not bad_names.empty:
+		if len(bad_names) > 0:
 			print 'There were invalid indicator names found in equation',this
 			print 'Invalid:', bad_names
 			print 'Run `python parser.py -i` for a list of valid names.'
@@ -181,19 +181,19 @@ def eval_eq(eq_list):
 			if operator == '^': tmp_result = tmp_result ** op_value
         
         # If len > 1, there are more parts to calculate.
-	if len(eq_list) > 1:
-		# Bump up the temporary column.
-		tmp_col += 1
-		# Set the temporary column to our temporary result.
-		banki[str(tmp_col)] = tmp_result
-		# Replace the part of the equation we just calculted with the
-        # name of temporary column. It will be called in next calculations.
-		eq_list[-1] = eq_list[-1].replace(this, str(tmp_col))      
-        # Remove first element, now that we've finished. 
-		eq_list = eq_list[1:]
-        # If there are no more elements, then tmp_result is final result.
-	else:
-		eq_list = tmp_result
+		if len(eq_list) > 1:
+			# Bump up the temporary column.
+			tmp_col += 1
+			# Set the temporary column to our temporary result.
+			banki[str(tmp_col)] = tmp_result
+			# Replace the part of the equation we just calculted with the
+			# name of temporary column. It will be called in next calculations.
+			eq_list[-1] = eq_list[-1].replace(this, str(tmp_col))      
+			# Remove first element, now that we've finished. 
+			eq_list = eq_list[1:]
+			# If there are no more elements, then tmp_result is final result.
+		else:
+			eq_list = tmp_result
 
 	return eq_list
 
@@ -205,20 +205,20 @@ def eval_eq(eq_list):
 def add_eqs(df, eq_list):
 
     # Use banki_complete which has all the indicators.
-    banki = pd.read_csv("../csv/banki_complete.csv", index_col=False)
+	banki = pd.read_csv("../csv/banki_complete.csv", index_col=False)
 
     # For each equation passed from the command line...
-    for eq in eq_list:
+	for eq in eq_list:
         # Get the recursive form of the equation.
-        recursive_eq_str = eq_helper(eq)
-        # Evaluate the column.
-        col = eval_eq(recursive_eq_str)
-        # Create a syntatically appropriate column name.
-        eq_str_col_name = eq.replace(' ','_')
-        # Add it to the DataFrame
-        df.insert(len(df.columns), eq_str_col_name, col)
+		recursive_eq_str = eq_helper(eq)
+		# Evaluate the column.
+		col = eval_eq(recursive_eq_str)
+		# Create a syntatically appropriate column name.
+		eq_str_col_name = eq.replace(' ','_')
+		# Add it to the DataFrame
+		df.insert(len(df.columns), eq_str_col_name, col)
 
-    return df
+	return df
 ####################################
 
 # Parse args.select
