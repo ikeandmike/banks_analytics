@@ -107,7 +107,7 @@ def parse_select(select):
 				ind_name = string.split(i, '!')[0]
 				range_cols.append(ind_name)
 			paren = i.find('(')
-			if paren != 1:
+			if paren != -1:
 				equation_cols.append(i)
 
     return [singular_cols, range_cols, equation_cols]
