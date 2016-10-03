@@ -151,7 +151,7 @@ feature_labels = np.array(feature_labels) # Convert feature_labels to a numpy nd
 if args.seed != None:
 	X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.33, random_state=int(args.seed), stratify=Y)
 else:
-	X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.33, random_state=42 stratify=Y)
+	X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.33, random_state=42, stratify=Y)
 
 # Data preprocessing (uncomment below to add preprocessing)
 #scale(X_train, copy=False)
