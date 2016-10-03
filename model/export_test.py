@@ -74,7 +74,7 @@ def export_results(r):
 	output_arr(r.predict_arr, "predict_array.csv")
 
 	# Create header with target values for some results files	
-	header = np.arange(1,25)
+	header = np.arange(1,9)
 	header = np.append(header, [1000, 9000])
 
 	output_arr_w_header(r.prob_arr, "probability_vectors.csv", header)
