@@ -6,9 +6,8 @@ import datetime as dt
 import argparse
 import string
 
-import pdb
-
 pd.options.mode.chained_assignment = None
+pd.set_option('mode.use_inf_as_null', True)
 
 ###############################
 ## Set Command Line Options
@@ -103,12 +102,15 @@ def parse_select(select):
         # Now, look for ! operator
         else:
 			bangs = i.find('!')
+			paren = i.find('(')
 			if bangs != -1:
 				ind_name = string.split(i, '!')[0]
 				range_cols.append(ind_name)
-			paren = i.find('(')
-			if paren != -1:
+			elif paren != -1:
 				equation_cols.append(i)
+			else:
+				print i, 'is ivalid. Run `python parser.py -i` for full list of indicators.'
+				raise SystemExit(0)
 
     return [singular_cols, range_cols, equation_cols]
 
@@ -134,10 +136,6 @@ def eq_helper(eq):
 # Takes output from eq_helper to calculate operations on columns.
 # param eq_list The list returned from eq_helper.
 def eval_eq(eq_list):
-	
-	#pdb.set_trace()
-
-	if not len(eq_list) > 0: return None
 
 	# banki_complete.csv has all the indicators, so we can use it
 	# to calculate new values for our current dataframe.
@@ -162,7 +160,7 @@ def eval_eq(eq_list):
 		if len(bad_names) > 0:
 			print 'There were invalid indicator names found in equation',this
 			print 'Invalid:', bad_names
-			print 'Run `python parser.py -i` for a list of valid names.'
+			print 'Run `python parser.py -i` for full list of indicators.'
 			raise SystemExit(0)
         
         # The result begins with the value of the first operand.
@@ -204,9 +202,6 @@ def eval_eq(eq_list):
 # param eq_list The string equations passed from the command line.
 def add_eqs(df, eq_list):
 
-    # Use banki_complete which has all the indicators.
-	banki = pd.read_csv("../csv/banki_complete.csv", index_col=False)
-
     # For each equation passed from the command line...
 	for eq in eq_list:
         # Get the recursive form of the equation.
@@ -217,6 +212,8 @@ def add_eqs(df, eq_list):
 		eq_str_col_name = eq.replace(' ','_')
 		# Add it to the DataFrame
 		df.insert(len(df.columns), eq_str_col_name, col)
+
+	#df.replace(np.inf, np.nan)
 
 	return df
 ####################################
@@ -238,6 +235,7 @@ model_data = banki_complete[['lic_num','period','months'] + singular_cols]
 ### Add ! columns. ###
 if len(range_cols) > 0: print 'Calculating ranges...'
 for col in range_cols:
+    
     r = get_ratio(col) # Ratios defined in dictionaries.py
 
     model_data[col + '!'] = banki_complete[col].apply(
