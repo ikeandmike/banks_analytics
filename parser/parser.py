@@ -137,63 +137,65 @@ def eq_helper(eq):
 # param eq_list The list returned from eq_helper.
 def eval_eq(eq_list):
 
+	if not len(eq_list) > 0: return None
+
 	# banki_complete.csv has all the indicators, so we can use it
 	# to calculate new values for our current dataframe.
-    banki = pd.read_csv('../csv/banki_complete.csv', index_col=False)
+	banki = pd.read_csv('../csv/banki_complete.csv', index_col=False)
     
     # Create temporary columns for extended operations.
-    tmp_col = 0
+	tmp_col = 0
 
 	# By the final calculation, eq_list will become the value
 	# of the Series we want.
-    while type(eq_list) != pd.Series:
+	while type(eq_list) != pd.Series:
     
-        this = eq_list[0]          # Set working equation part to first element.
-        operator = this[1]            # Set operator.
-        operands = this[3:-1].split() # Set operands.
+		this = eq_list[0]          # Set working equation part to first element.
+		operator = this[1]            # Set operator.
+		operands = this[3:-1].split() # Set operands.
         
         # Check names for validity.
-        bad_names = []
-        for op in operands:
-        	if not op in list(banki.columns):
-        		bad_names.append(op)
-        if not bad_names.empty:
-        	print 'There were invalid indicator names found in equation',this
-        	print 'Invalid:', bad_names
-        	print 'Run `python parser.py -i` for a list of valid names.'
-        	raise SystemExit(0)
+		bad_names = []
+		for op in operands:
+			if not op in list(banki.columns):
+				bad_names.append(op)
+		if not bad_names.empty:
+			print 'There were invalid indicator names found in equation',this
+			print 'Invalid:', bad_names
+			print 'Run `python parser.py -i` for a list of valid names.'
+			raise SystemExit(0)
         
         # The result begins with the value of the first operand.
-        tmp_result = banki[operands[0]]
+		tmp_result = banki[operands[0]]
 
         # For each operand.
-        for op in range(1, len(operands)):
-            # Set the column with which to operate.
-            op_value = banki[operands[op]]
+		for op in range(1, len(operands)):
+			# Set the column with which to operate.
+			op_value = banki[operands[op]]
     
             # Math.
-            if operator == '/': tmp_result = tmp_result / op_value
-            if operator == '*': tmp_result = tmp_result * op_value
-            if operator == '+': tmp_result = tmp_result + op_value
-            if operator == '-': tmp_result = tmp_result - op_value
-            if operator == '^': tmp_result = tmp_result ** op_value
+			if operator == '/': tmp_result = tmp_result / op_value
+			if operator == '*': tmp_result = tmp_result * op_value
+			if operator == '+': tmp_result = tmp_result + op_value
+			if operator == '-': tmp_result = tmp_result - op_value
+			if operator == '^': tmp_result = tmp_result ** op_value
         
         # If len > 1, there are more parts to calculate.
-        if len(eq_list) > 1:
-        	# Bump up the temporary column.
-            tmp_col += 1
-            # Set the temporary column to our temporary result.
-            banki[str(tmp_col)] = tmp_result
-            # Replace the part of the equation we just calculted with the
-            # name of temporary column. It will be called in next calculations.
-            eq_list[-1] = eq_list[-1].replace(this, str(tmp_col))      
-            # Remove first element, now that we've finished. 
-            eq_list = eq_list[1:]
+	if len(eq_list) > 1:
+		# Bump up the temporary column.
+		tmp_col += 1
+		# Set the temporary column to our temporary result.
+		banki[str(tmp_col)] = tmp_result
+		# Replace the part of the equation we just calculted with the
+        # name of temporary column. It will be called in next calculations.
+		eq_list[-1] = eq_list[-1].replace(this, str(tmp_col))      
+        # Remove first element, now that we've finished. 
+		eq_list = eq_list[1:]
         # If there are no more elements, then tmp_result is final result.
-        else:
-            eq_list = tmp_result
+	else:
+		eq_list = tmp_result
 
-    return eq_list
+	return eq_list
 
 
 # Puts all the equation helper functions together to add string equations passed
