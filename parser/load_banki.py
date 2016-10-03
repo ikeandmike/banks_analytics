@@ -275,7 +275,14 @@ def load_banki_revoked(update=False, redownload=False):
         url = 'http://www.banki.ru/banks/memory/?PAGEN_1=' + str(i)
         
         # The content we want is in [2] of the returned web thingy.
-        tmp = pd.read_html(url)[2]
+        signal.signal(signal.SIGALRM, timeout_handler)
+    	signal.alarm(TIMEOUT)
+        try:
+        	tmp = pd.read_html(url)[2]
+        except Exception, e:
+        	print e
+        	tmp = pd.DataFrame()
+        signal.alarm(0) # Cancel signal alarm
         
         # Rename columns
         tmp.columns = ['idx', 'bank', 'lic_num', 'cause', 'revoc_date', 'region']
