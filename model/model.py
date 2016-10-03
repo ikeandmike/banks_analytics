@@ -50,11 +50,11 @@ if args.description != None:
 
 call_parse = ["../parser/parser.py", "-s"]
 
-#TODO Fix typos in dictonaries.py (moths, mortaged)
 normatives                           = ["N1", "N1_0", "N1_1", "N1_2", "N2", "N3", "N4", "N7", "N9_1", "N10_1", "N12"]
 loans_to_businesses_and_institutions = ["for_a_term_of_up_to_6_months", "for_a_term_of_6_months_to_1_year", "for_a_term_of_1_year_to_3_years", "for_a_term_over_3_years"]
 ratios                               = ["return_on_net_assets", "return_on_equity", "reserve_to_loans", "mortgaged_property_to_loans", "foreign_currency_operations_to_net_assets"]
-custom_ratios                        = ["(/ interbank_credit_in_cbr_turnover interbank_credit_in_cbr)", "(/ overdue_debt_1 overdrafts)", "(/ attracted_interbank_loans_from_cbr_turnover attracted_interbank_loans_from_cbr)"]
+custom_ratios                        = ['"(/ interbank_credit_in_cbr_turnover interbank_credit_in_cbr)"', '"(/ overdue_debt_1 overdrafts)"', '"(/ attracted_interbank_loans_from_cbr_turnover attracted_interbank_loans_from_cbr)"']
+# NOTE: custom_ratios must be enclosed in double quotes for the parser to read them correctly
 
 # Created feature set this way because of the length of the strings
 # To add features, append feature strings to *this* array
