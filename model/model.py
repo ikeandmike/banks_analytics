@@ -112,8 +112,8 @@ with open('../csv/model_data.csv', 'rb') as csvfile:
 				X = np.concatenate(( X, np.array([new_feat]) )) # Add new feature set to array
 
 				# Uncomment to run on all 26 classes, and comment out the QUARTERLY block				
-				#Y = np.append(Y, target)
-				
+				# Y = np.append(Y, target)
+
 				# QUARTERLY
 				if target <= 3: Y = np.append(Y, 1)
 				elif target <= 6: Y = np.append(Y, 2)
@@ -172,8 +172,8 @@ else:		      	c_val = 0.01
 
 # Create the model & fit to training data
 # Uncomment line to run LogisticRegression
-model = linear_model.LogisticRegression(penalty='l1', multi_class='ovr').fit(X_train, Y_train)
-#model = ensemble.RandomForestClassifier().fit(X_train, Y_train)
+# model = linear_model.LogisticRegression(penalty='l1', multi_class='ovr').fit(X_train, Y_train)
+model = ensemble.RandomForestClassifier().fit(X_train, Y_train)
 
 print("Generating predictions...")
 predict_arr = model.predict(X_test)	  # Run a prediction for test dataset (ie. compare this array to Y_test)
@@ -188,8 +188,8 @@ exec_time = default_timer() - start_time # Calculate execution time
 
 # Add results to "results" object
 # Uncomment this line when running LogisticRegression
-results.addResults(c_val, model.coef_, predict_arr, prob_arr, precision, recall, f1, exec_time)
-#results.addResults(c_val, model.feature_importances_, predict_arr, prob_arr, precision, recall, f1, exec_time)
+# results.addResults(c_val, model.coef_, predict_arr, prob_arr, precision, recall, f1, exec_time)
+results.addResults(c_val, model.feature_importances_, predict_arr, prob_arr, precision, recall, f1, exec_time)
 
 # If running with c_test option, export results
 # Uncomment for LogisticRegression
