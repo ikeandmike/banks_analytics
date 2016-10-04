@@ -5,10 +5,10 @@ import numpy as np
 
 from export_test import *
 
-# USAGE: This script runs multinomial_logistic_regression.py on the same seed
-#        with different C values to compare them. The vals array below contains
-#        the C values that the script will iterate over. Change it to include
-#        whichever values you want.
+# USAGE: This script runs model.py on the same seed with different C values to
+#        compare them. The vals array below contains the C values that the script
+#        will iterate over. Change it to include whichever values you want.
+#        Make sure model.py is properly uncommented to run LogisticRegression (default is RandomForest)
 
 #################################### SCRIPT ####################################
 
@@ -25,5 +25,5 @@ with open(fileName, "w") as myfile:
 
 # Iterate over test values for C, run model on same seed to get comparative results
 for C in vals:
-	subprocess.call(["./multinomial_logistic_regression.py", "-ct", fileName, "-c", str(C), "-s", "42"])
+	subprocess.call(["./model.py", "-ct", fileName, "-c", str(C), "-s", "42"])
 print("\nResults stored in %s" % fileName)

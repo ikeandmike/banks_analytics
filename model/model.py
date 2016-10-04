@@ -5,18 +5,18 @@
 import csv, sys, argparse, subprocess
 import numpy as np
 from timeit import default_timer
-from sklearn import linear_model, ensemble
 from sklearn.preprocessing import scale
+from sklearn import linear_model, ensemble
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import precision_score, recall_score, f1_score
-from sklearn.cross_validation import train_test_split
 
-# Class I made for storing details (used for exporting to txt file, for creating graphs etc.)
+# Class I made for storing details (used for exporting results to txt file)
 from ModelResults import ModelResults
 # A file I wrote to export results
 from export_test import *
 
-np.set_printoptions(threshold=np.inf) # Turns off truncation (forces numpy to print large arrays)
-np.set_printoptions(precision=3) # Sets number of printed digits
+np.set_printoptions(threshold=np.inf) 	# Turns off truncation (forces numpy to print large arrays)
+np.set_printoptions(precision=3) 	# Sets number of printed digits
 
 # These two arrays contain the top and bottom 20 banks in terms of net assets as ranked on Banki.ru on 27/09/16
 top_banks = [1481,1000,354,2209,1623,3349,1326,3466,1978,3251,1,2562,3292,2272,2748,328,2888,436,963,2289]
@@ -26,20 +26,21 @@ bottom_banks = [3430,3420,3309,3353,2688,3318,3514,384,2605,2435,3343,3502,3509,
 
 start_time = default_timer() # To measure program execution time
 
-print("WPI/Deloitte Regression Model for Predicting License Revocation of Russian Banks\n")
+print("WPI/Deloitte Model for Predicting License Revocation of Russian Banks\n")
 
 # Argument Parsing
 parser = argparse.ArgumentParser()
-c_par = parser.add_mutually_exclusive_group()
-c_par.add_argument("-c", "--pass_c", help="Pass in value for C for model to use. Only used when running LogisticRegression")
-seed_par = parser.add_mutually_exclusive_group()
-seed_par.add_argument("-s", "--seed", help="Pass seed for train_test_split.")
 desc = parser.add_mutually_exclusive_group()
 desc.add_argument("-d", "--description", help="Give text to describe model run type. Will be stored in description.txt")
+seed_par = parser.add_mutually_exclusive_group()
+seed_par.add_argument("-s", "--seed", help="Pass seed for train_test_split.")
+c_par = parser.add_mutually_exclusive_group()
+c_par.add_argument("-c", "--pass_c", help="Pass in value for C for model to use. Only used when running LogisticRegression")
 c_test = parser.add_mutually_exclusive_group()
 c_test.add_argument("-ct", "--c_test", help="Used by c_test.py to output several runs to one file; give this option the path to the file where all results should be stored. Only used when running LogisticRegression")
 args = parser.parse_args()
 
+# Write description to txt file if given
 if args.description != None:
 	generate_path() # Generate folders for path if they don't exist
 
@@ -84,9 +85,9 @@ with open('../csv/model_data.csv', 'rb') as csvfile:
 			# Uncomment rest of line to exclude extreme banks
 			if target > 0: # and lic_num not in top_banks and lic_num not in bottom_banks:
 				
-				# Generate array of new features
+				# Generate array of features in this row
 				new_feat = []
-				for j in range(3, numFeatures+3):	# Iterate over features, add to array
+				for j in range(3, numFeatures+3): # Iterate over features, add to array
 					curr_feat = row[j]
 
 					# No data provided for this feature
@@ -122,7 +123,8 @@ with open('../csv/model_data.csv', 'rb') as csvfile:
 				elif target <= 18: Y = np.append(Y, 6)
 				elif target <= 21: Y = np.append(Y, 7)
 				elif target <= 24: Y = np.append(Y, 8)
-				else: Y = np.append(Y, target)			# Add new target to array
+				else: Y = np.append(Y, target)
+				
 
 		else:
 			firstRow = False
@@ -135,10 +137,10 @@ with open('../csv/model_data.csv', 'rb') as csvfile:
 				feature_labels.append("%s_M?" % row[j])	# For "missing" column (1 if feature present, 0 if not)
 
 			# Create the feature and target datasets respectively
-			X = np.empty((0,numFeatures*2), float) # np.empty creates an empty array with shape attributes (so it can be used in concatenate)
+			X = np.empty((0,numFeatures*2), float) # Create empty array with shape attributes (so it can be used in concatenate)
 			Y = np.array([])
 
-		# Print dots to indicate progress		
+		# Print dots to indicate progress
 		if i % 350 == 0:
 			sys.stdout.write('.')
 			sys.stdout.flush()
@@ -148,17 +150,17 @@ feature_labels = np.array(feature_labels) # Convert feature_labels to a numpy nd
 
 # Split data into testing & training, with 66% training, 33% testing
 # If seed passed, use it
+# Otherwise, seed used to keep split consistent
 if args.seed != None:
 	X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.33, random_state=int(args.seed), stratify=Y)
 else:
 	X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.33, random_state=42, stratify=Y)
 
 # Data preprocessing (uncomment below to add preprocessing)
-#scale(X_train, copy=False)
-#scale(X_test, copy=False)
+# scale(X_train, copy=False)
+# scale(X_test, copy=False)
 
 print("\nFitting model...")
-
 # Store results in ModelResults object
 results = ModelResults(X_train, X_test, Y_train, Y_test, feature_labels)
 
@@ -170,8 +172,8 @@ else:		      	c_val = 0.01
 
 # Create the model & fit to training data
 # Uncomment line to run LogisticRegression
-#model = linear_model.LogisticRegression(penalty='l1', multi_class='ovr').fit(X_train, Y_train)
-model = ensemble.RandomForestClassifier().fit(X_train, Y_train)
+model = linear_model.LogisticRegression(penalty='l1', multi_class='ovr').fit(X_train, Y_train)
+#model = ensemble.RandomForestClassifier().fit(X_train, Y_train)
 
 print("Generating predictions...")
 predict_arr = model.predict(X_test)	  # Run a prediction for test dataset (ie. compare this array to Y_test)
@@ -184,11 +186,12 @@ f1        = f1_score(Y_test, predict_arr, average=None)		# Calculate f1
 
 exec_time = default_timer() - start_time # Calculate execution time
 
+# Add results to "results" object
 # Uncomment this line when running LogisticRegression
-#results.addResults(c_val, model.coef_, predict_arr, prob_arr, precision, recall, f1, exec_time) # Add results to "results" object
-results.addResults(c_val, model.feature_importances_, predict_arr, prob_arr, precision, recall, f1, exec_time) # Add results to "results" object
+results.addResults(c_val, model.coef_, predict_arr, prob_arr, precision, recall, f1, exec_time)
+#results.addResults(c_val, model.feature_importances_, predict_arr, prob_arr, precision, recall, f1, exec_time)
 
-# If C value passed in, add results to file (used in script for testing several values of C)
+# If running with c_test option, export results
 # Uncomment for LogisticRegression
 #if args.c_test != None:
 #	export_c_test(results, args.c_test)

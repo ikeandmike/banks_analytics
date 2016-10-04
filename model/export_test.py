@@ -4,7 +4,8 @@ import os
 import datetime
 import numpy as np
 
-from ModelResults import ModelResults # Class I made for storing details (used for exporting to txt file, for creating graphs etc.)
+# Class I made for storing details (& exporting to txt file)
+from ModelResults import ModelResults
 
 ############################# CREATE PATH VARIABLE #############################
 
@@ -47,7 +48,6 @@ def output_arr_w_header(arr, filename, header):
 # Creates four files, one for each data set (X_train, X_test, Y_train, Y_test)
 # Also export value of C
 def export_data_sets(r):
-
 	output_arr_w_header(r.X_train, "X_train.csv", r.feature_labels)
 	output_arr_w_header(r.X_test, "X_test.csv", r.feature_labels)
 	output_arr(r.Y_train, "Y_train.csv")
