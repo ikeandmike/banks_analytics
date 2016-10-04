@@ -9,6 +9,11 @@ A suite of programs to evaluate RandomForestClassifier and LogisticRegression fo
 * The model utilizes the [scikit-learn library](https://scikit-learn.org/stable/) for Python.
 
 ## How to Run it
+* Before running, the model requires the following libraries:
+	* Scikit-learn
+	* Numpy
+	* Scipy
+	* Pandas
 * To run the model, cd into the `model` folder, and execute `python model.py`
 
 ## How it Works
@@ -27,7 +32,8 @@ The model is comprised of several files, all located in the `model` folder.
 * model.py is the main program file.
 * ModelResults.py contains a definition for the ModelResults class, which is used to store (and eventually export) the results of model execution.
 * export_test.py contains code for exporting results from the model. This is used by model.py
+* rand_test.py is a small script for generating scores for precision/recall/F1 on a set of results where the predictions were made by a random number generator. We used this to give a baseline comparison of our models vs. random guessing.
 * c_test.py is a script for testing C values of LogisticRegression.
 
 ## Results
-From our comparison we found that RandomForest always outperformed LogisticRegression. For full results, see our report on WPI's website (link to come later).
+From our comparison we found that RandomForest always outperformed LogisticRegression. For full results, including all datasets, graphs, and our analysis, see our report on WPI's website (link to come later).
