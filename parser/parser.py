@@ -47,10 +47,10 @@ parser.add_argument(
     '--select',
     metavar='COLUMNS',
     nargs='*',
-    help="Select columns from indicator dataset to use in model. \
+    help='Select columns from indicator dataset to use in model. \
     To receive binary indicators (ie. is indicator in acceptable range) \
-    add a bang after the indicator (ie. 'N1!'). To calculate values between \
-    indicators, use Lisp notation: '(/ (+ net_assets net_profit) loans)'"
+    add a bang after the indicator (ie. "N1!"). To calculate values between \
+    indicators, use Lisp notation: "(/ (+ net_assets net_profit) loans)" Make sure to use double-quotes!'
     )
 
 args = parser.parse_args()
