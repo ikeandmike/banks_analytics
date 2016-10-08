@@ -9,10 +9,11 @@ A suite of programs to evaluate RandomForestClassifier and LogisticRegression fo
 * The model utilizes the [scikit-learn library](https://scikit-learn.org/stable/) for Python.
 
 ## How to Run it
-* Before running, the model requires the following libraries:
-	* Scikit-learn
-	* Numpy
-	* Scipy
+* Before running, the model has the following dependencies:
+	* Python (Version >= 2.6)
+	* Scikit-learn (Version >= 0.18)
+	* Numpy (Version >= 1.6.1)
+	* Scipy (Version 0.9)
 	* Pandas
 * To run the model, cd into the `model` folder, and execute `python model.py`
 
