@@ -19,8 +19,8 @@ def ind_dict_banki_ru():
                        1550, # [14] foreign_currency_operations_rub
                        1600, # [15] N1
                        1700, # [16] N2
-                       1800, # [17]
-                       100,  # [18] 
+                       1800, # [17] N3
+                       100,  # [18] net_assets from Carrying Amounts
                        250,  # [19] overdrafts_and_other_funds_procided
                        260,  # [20] overdue_debt
                        120,  # [21] inter-bank_loans_issued
@@ -58,24 +58,24 @@ def ind_dict_banki_ru():
                         'N3',  # [17] 1800
                         'net_assets_ca', # [18] 100
                         'overdrafts_and_other_funds_procided',# [19] 250
-                        'overdue_debt',# [20] 260
-                        'inter-bank_loans_issued',# [21] 120
-                        'interbank_credit_in_cbr',# [22] 121
-                        'interbank_credit_in_cbr_turnover',# [23] 1210
-                        'issued_interbank, turnover',# [24] 122
+                        'overdue_debt',                       # [20] 260
+                        'inter-bank_loans_issued',            # [21] 120
+                        'interbank_credit_in_cbr',            # [22] 121
+                        'interbank_credit_in_cbr_turnover',   # [23] 1210
+                        'issued_interbank, turnover',         # [24] 122
                         'loans_extended_to_businesses_and_institutions',# [25] 300
-                        'for_a_term_of_up_to_6_months',# [26] 310
-                        'for_a_term_of_6_months_to_1_year',# [27] 320
-                        'for_a_term_of_1_year_to_3_years',# [28] 330
-                        'for_a_term_over_3_years',# [29] 340
-                        'overdrafts',# [30] 350 
-                        'overdue_debt_1',# [31]360 
-                        'interbank_loans_raised',# [32] 600
+                        'for_a_term_of_up_to_6_months',       # [26] 310
+                        'for_a_term_of_6_months_to_1_year',   # [27] 320
+                        'for_a_term_of_1_year_to_3_years',    # [28] 330
+                        'for_a_term_over_3_years',            # [29] 340
+                        'overdrafts',                         # [30] 350 
+                        'overdue_debt_1',                     # [31]360 
+                        'interbank_loans_raised',            # [32] 600
                         'attracted_interbank_loans_turnover',# [33] 610
                         'attracted_interbank_loans_from_cbr',# [34] 620
                         'attracted_interbank_loans_from_cbr_turnover']}# [35] 621
 
-# param key 'ind_num' or 'ind_name'
+# Get indicator name if given code, get code if given name.
 def get_ind(inds):
 
     if type(inds) is not list: inds = [inds]
@@ -99,7 +99,7 @@ def get_ind(inds):
 
     return result
 
-# Ranges for ratios. Ranges are dummy values right now.
+# Ranges for ratios.
 # Ratios with no lower or upper bound will be assigned
 # the min or max size of int, respectively.
 def ratio_dict():
@@ -155,7 +155,8 @@ def ratio_dict():
                          [0.08,sys.maxint],     # [23] N1_0
                          [0.045,sys.maxint],    # [24] N1_1
                          [0.06,sys.maxint]]}    # [25] N1_2
-                
+
+# Get ratio from indicator name.        
 def get_ratio(inds):
 
     if type(inds) is not list: inds = [inds]
