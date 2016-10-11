@@ -3,17 +3,26 @@ import datetime as dt
 from decimal import *
 import os
 
-## TODO: Make it a function, add updating feature.
+## ATTENTION!
+##
+## This script fails at line 56 with column name assignation.
+## Otherwise, it'll write to ../csv/cbr_temp.csv with the Cyrllic column names.
+## However, parser.py and load_banki.py use CBR data from
+## cbr_standards_complete.csv. This means that if you want to update
+## the cbr_standards_complete.csv, you'll have to do it by hand:
+##     1. Run load_cbr.py
+##     2. Reformat cbr_tmp.csv
+##     3. Call load_banki.py's helper function complete_banki()
+##        but with adjustment:
+##         i. Comment out the line which exports to banki_complete.csv
+##        ii. Write in a line which exports to cbr_standards_complete.csv 
+##
+## Generally, I hope no one has to run this again, because it took
+## about 13 hours to check all months just from 2011 to the present
+## for all banks listed on banki.ru.
 
-execfile("../banks_analytics/load_cbr_api.py")
+execfile("load_cbr_api.py")
 banki = pd.read_csv("../csv/banki_complete.csv")
-
-
-if os.path.isfile("/Users/jabortell/Desktop/cbr_tmp.csv"):
-    cbr = pd.read_csv("/Users/jabortell/Desktop/cbr_tmp.csv", encoding='windows-1251', index_col=False)
-    tmp_lic_nums = set(cbr['lic_num'])
-else:
-    tmp_lic_nums = []
 
 now = dt.datetime.now()
 cbr = pd.DataFrame()
@@ -25,12 +34,9 @@ size = len(lic_nums)
 n = 1
 print "Downloading CBR Standards..."
 for l in lic_nums:
-    if l in tmp_lic_nums:
-        n += 1
-        break
     for i in years:
         for j in months:
-            if i == now.year and j == now.month+1: break
+            if i == now.year and j > now.month+1: break
             if j < 10: j = '0' + str(j)
             cbr_date = str(i) + '-' + str(j) + '-01T00:00:00+03:00'
             sys.stdout.flush()
@@ -48,7 +54,7 @@ for l in lic_nums:
             except Exception as e:
                 print str(e)
                 pass
-    cbr.to_csv('~/Desktop/cbr_tmp.csv', encoding='windows-1251')
+    cbr.to_csv('../csv/cbr_tmp.csv', encoding='windows-1251')
     n += 1
         
 cbr.reset_index(inplace=True)
